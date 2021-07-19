@@ -10,6 +10,12 @@ BASE_ADDRESS = 0x80200000;
 /* opensbi仍旧把kernel放在0x80200000物理内存中 */
 BASE_ADDRESS = 0xffffffff80200000;
 
+/*
+ * 0x45000000, 0xffffffffc0000000 -> 0x40000000
+ */
+BASE_ADDRESS = 0xffffffffc5000000;
+
+
 SECTIONS
 {
     /* Load the kernel at this address: "." means the current address */

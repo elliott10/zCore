@@ -45,15 +45,15 @@ const KERNEL_PM4: usize = (KERNEL_OFFSET >> 39) & 0o777;
 const PHYSICAL_MEMORY_PM4: usize = (PHYSICAL_MEMORY_OFFSET >> 39) & 0o777;
 
 #[cfg(target_arch = "riscv64")]
-const KERNEL_OFFSET: usize = 0xFFFF_FFFF_8000_0000;
+const KERNEL_OFFSET: usize = 0xffffffffc0000000;
 #[cfg(target_arch = "riscv64")]
-const MEMORY_OFFSET: usize = 0x8000_0000;
+const MEMORY_OFFSET: usize = 0x40000000;
 #[cfg(target_arch = "riscv64")]
 const PHYSICAL_MEMORY_OFFSET: usize = KERNEL_OFFSET - MEMORY_OFFSET;
 
 // TODO: get memory end from device tree
 #[cfg(target_arch = "riscv64")]
-const MEMORY_END: usize = 0x8800_0000;
+const MEMORY_END: usize = 0x70000000;
 
 #[cfg(target_arch = "riscv64")]
 const KERNEL_HEAP_SIZE: usize = 8 * 1024 * 1024; // 8 MB

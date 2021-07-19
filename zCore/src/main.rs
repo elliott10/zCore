@@ -85,7 +85,17 @@ fn main(ramfs_data: &[u8], cmdline: &str) {
 #[cfg(target_arch = "riscv64")]
 #[no_mangle]
 pub extern "C" fn rust_main(hartid: usize, device_tree_paddr: usize) -> ! {
-    let device_tree_vaddr = phys_to_virt(device_tree_paddr);
+
+println!("      ____");
+println!(" ____/ ___|___  _ __ ___");
+println!("|_  / |   / _ \\| '__/ _ \\");
+println!(" / /| |__| (_) | | |  __/");
+println!("/___|\\____\\___/|_|  \\___|");
+println!("");
+
+    println!("Welcome to zCore rust_main( hartid: {:#x}, device_tree_paddr: {:#x} )", hartid, device_tree_paddr);
+    //let device_tree_vaddr = phys_to_virt(device_tree_paddr);
+    let device_tree_vaddr = 0;
 
     let boot_info = BootInfo {
         memory_map: Vec::new(),
@@ -98,11 +108,14 @@ pub extern "C" fn rust_main(hartid: usize, device_tree_paddr: usize) -> ! {
         cmdline: "LOG=debug:TERM=xterm-256color:console.shell=true:virtcon.disable=true",
     };
 
+    /* 很慢?
     unsafe {
         memory::clear_bss();
     }
+    */
 
-    logging::init(get_log_level(boot_info.cmdline));
+    // logging在全志D1 c906上还有问题
+    //logging::init(get_log_level(boot_info.cmdline));
     warn!("rust_main(), After logging init\n\n");
     memory::init_heap();
     memory::init_frame_allocator(&boot_info);
@@ -111,7 +124,7 @@ pub extern "C" fn rust_main(hartid: usize, device_tree_paddr: usize) -> ! {
     #[cfg(feature = "graphic")]
     init_framebuffer(boot_info);
 
-    info!("{:#x?}", boot_info);
+    //info!("{:#x?}", boot_info);
 
     kernel_hal_bare::init(kernel_hal_bare::Config {
         mconfig: 0,
