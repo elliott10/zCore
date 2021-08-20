@@ -13,7 +13,7 @@ make build linux=1 arch=riscv64
 ```
 
 ## riscv64开发板的烧写
-以全志D1 c906开发板为例：
+以全志D1 c906开发板为例.<br>
 
 下载并编译烧写工具xfel:
 ```
@@ -28,13 +28,12 @@ cp ../prebuilt/fw_jump-0x45000000.bin fw-zCore.bin
 dd if=target/riscv64/debug/zcore.bin of=fw-zCore.bin bs=1 seek=83886080
 ```
 
-启动全志D1 c906开发板，并进入FEL模式。可在开发板的Linux系统中执行`reboot efex`命令进入FEL模式。
+启动全志D1 c906开发板，并进入FEL模式。可在开发板的Linux系统中执行`reboot efex`命令进入FEL模式。<br>
 然后通过烧写工具xfel把zCore系统镜像载入到DDR中，并运行：
 ```
 sudo xfel ddr ddr3
 sudo xfel write 0x40000000 fw-zCore.bin
 sudo xfel exec 0x40000000
-
 ```
 
 或者在安装好工具xfel，开发板进入FEL模式后，直接运行：
@@ -42,7 +41,9 @@ sudo xfel exec 0x40000000
 make run-thead linux=1 arch=riscv64
 ```
 
-成功引导zCore后，如下所示：
+## 引导运行
+
+zCore成功引导后将如下所示：
 ```
 OpenSBI smartx-d1-tina-v1.0.1-release
    ____                    _____ ____ _____
