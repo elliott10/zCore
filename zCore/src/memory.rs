@@ -199,6 +199,7 @@ static mut SATP: usize = 0;
 pub unsafe fn clear_bss() {
     let start = sbss as usize;
     let end = ebss as usize;
+    print!("{:#x} ~ {:#x}\n", start, end);
     let step = core::mem::size_of::<usize>();
     for i in (start..end).step_by(step) {
         (i as *mut usize).write(0);

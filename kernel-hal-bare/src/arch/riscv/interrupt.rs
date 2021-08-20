@@ -270,16 +270,16 @@ fn super_timer(){
     timer_set_next();
     super::timer_tick();
 
-    //bare_print!(".");
+    bare_print!(".");
 
 	//发生外界中断时，epc的指令还没有执行，故无需修改epc到下一条
 }
 
 fn init_uart(){
-    uart::Uart::new(0x1000_0000 + PHYSICAL_MEMORY_OFFSET).simple_init();
+    uart::Uart::new(0x02500000 + PHYSICAL_MEMORY_OFFSET).simple_init();
 
     //但当没有SBI_CONSOLE_PUTCHAR时，却为什么不行？
-    super::putfmt_uart(format_args!("{}", "Uart output testing\n"));
+    super::putfmt_uart(format_args!("{}", "Uart output testing\r\n"));
 
     bare_println!("+++ Setting up UART interrupts +++");
 }
@@ -296,11 +296,10 @@ pub fn try_process_serial() -> bool {
 }
 
 pub fn init_ext(){
-    // Qemu virt
-    // UART0 = 10
-    plic::set_priority(10, 7);
+    // D1 ALLWINNER UART0 = 18
+    plic::set_priority(18, 31);
     plic::set_threshold(0);
-    plic::enable(10);
+    plic::enable(18);
 
     bare_println!("+++ Setting up PLIC +++");
 }

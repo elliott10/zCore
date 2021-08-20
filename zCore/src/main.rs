@@ -108,11 +108,11 @@ println!("");
         cmdline: "LOG=debug:TERM=xterm-256color:console.shell=true:virtcon.disable=true",
     };
 
-    /* 很慢?
+    print!("+++ Clearing section .bss ");
+    // 很慢?
     unsafe {
         memory::clear_bss();
     }
-    */
 
     // logging在全志D1 c906上还有问题
     //logging::init(get_log_level(boot_info.cmdline));
@@ -168,7 +168,7 @@ fn main(_cmdline: &str) {
             let len = kernel_hal_bare::serial_read(&mut buffer);
             for c in &buffer[..len] {
                 STDIN.push((*c).into());
-                //kernel_hal_bare::serial_write(alloc::format!("{}", *c as char).as_str());
+                kernel_hal_bare::serial_write(alloc::format!("{}", *c as char).as_str());
             }
             false
         }

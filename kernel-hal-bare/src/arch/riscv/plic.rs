@@ -3,18 +3,13 @@ use super::interrupt;
 use crate::putfmt; //For bare_println
 use super::consts::PHYSICAL_MEMORY_OFFSET;
 
-const MMODE: usize = 0;
-
-// k210
-//const MMODE: usize = 1;
-
 //通过MMIO地址对平台级中断控制器PLIC的寄存器进行设置
 //
 //Source 1 priority: 0x0c000004
 //Source 2 priority: 0x0c000008
-const PLIC_PRIORITY:   usize = 0x0c00_0000 + PHYSICAL_MEMORY_OFFSET;
+const PLIC_PRIORITY:   usize = 0x1000_0000 + PHYSICAL_MEMORY_OFFSET;
 //Pending 32位寄存器，每一位标记一个中断源ID
-const PLIC_PENDING:    usize = 0x0c00_1000 + PHYSICAL_MEMORY_OFFSET;
+const PLIC_PENDING:    usize = 0x1000_1000 + PHYSICAL_MEMORY_OFFSET;
 
 //Target 0 threshold: 0x0c200000
 //Target 0 claim    : 0x0c200004
@@ -22,8 +17,8 @@ const PLIC_PENDING:    usize = 0x0c00_1000 + PHYSICAL_MEMORY_OFFSET;
 //Target 1 threshold: 0x0c201000 *
 //Target 1 claim    : 0x0c201004 *
 
-const PLIC_THRESHOLD:  usize = if MMODE == 1 { 0x0c200000 + PHYSICAL_MEMORY_OFFSET }else{ 0x0c201000 + PHYSICAL_MEMORY_OFFSET };
-const PLIC_CLAIM:      usize = if MMODE == 1 { 0x0c200004 + PHYSICAL_MEMORY_OFFSET }else{ 0x0c201004 + PHYSICAL_MEMORY_OFFSET };
+const PLIC_THRESHOLD:  usize = 0x1020_1000 + PHYSICAL_MEMORY_OFFSET;
+const PLIC_CLAIM:      usize = 0x1020_1004 + PHYSICAL_MEMORY_OFFSET;
 
 //注意一个核的不同权限模式是不同Target
 //Target: 0  1  2        3  4  5
@@ -31,7 +26,8 @@ const PLIC_CLAIM:      usize = if MMODE == 1 { 0x0c200004 + PHYSICAL_MEMORY_OFFS
 //
 //target 0 enable: 0x0c002000
 //target 1 enable: 0x0c002080 *
-const PLIC_INT_ENABLE: usize = if MMODE == 1 { 0x0c002000 + PHYSICAL_MEMORY_OFFSET }else{ 0x0c002080 + PHYSICAL_MEMORY_OFFSET }; //基于opensbi后一般运行于Hart0 S态，故为Target1
+const PLIC_INT_ENABLE: usize = 0x1000_2080 + PHYSICAL_MEMORY_OFFSET;
+//基于opensbi后一般运行于Hart0 S态，故为Target1
 
 //PLIC是async cause 11
 //声明claim会清除中断源上的相应pending位。
@@ -84,7 +80,7 @@ pub fn enable(id: u32) {
 
 //设置中断源的优先级，分0～7级，7是最高级, eg:这里id=10, 表示第10个中断源的设置, prio=1
 pub fn set_priority(id: u32, prio: u8) {
-	let actual_prio = prio as u32 & 7;
+	let actual_prio = prio as u32 & 0x1f;
 	let prio_reg = PLIC_PRIORITY as *mut u32;
 	unsafe {
 		prio_reg.add(id as usize).write_volatile(actual_prio); //0x0c000000 + 4 * 10 <= 1 = 1 & 7
@@ -93,7 +89,7 @@ pub fn set_priority(id: u32, prio: u8) {
 
 //设置中断target的全局阀值［0..7]， <= threshold会被屏蔽
 pub fn set_threshold(tsh: u8) {
-	let actual_tsh = tsh & 7; //使用0b111保留最后三位
+	let actual_tsh = tsh & 0x1f; //使用0b11111保留最后5位
 	let tsh_reg = PLIC_THRESHOLD as *mut u32;
 	unsafe {
 		tsh_reg.write_volatile(actual_tsh as u32); // 0x0c20_0000 <= 0 = 0 & 7
@@ -107,7 +103,7 @@ pub fn handle_interrupt() {
 				//virtio::handle_interrupt(interrupt);
 				bare_println!("plic virtio external interrupt: {}", interrupt);
 			},
-			10 => { //UART中断ID是10
+			18 => {
                 uart::handle_interrupt();
 
                 //换用sbi的方式获取字符

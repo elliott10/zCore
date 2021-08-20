@@ -36,6 +36,12 @@ sudo xfel write 0x40000000 fw-zCore.bin
 sudo xfel exec 0x40000000
 
 ```
+
+或者在安装好工具xfel，开发板进入FEL模式后，直接运行：
+```
+make run-thead linux=1 arch=riscv64
+```
+
 成功引导zCore后，如下所示：
 ```
 OpenSBI smartx-d1-tina-v1.0.1-release

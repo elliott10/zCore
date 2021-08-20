@@ -44,15 +44,14 @@ pub fn remap_the_kernel(dtb: usize) {
         // D1 c906 todo
         //map_range(&mut pt, dtb, dtb + consts::MAX_DTB_SIZE, linear_offset, PTF::VALID | PTF::READABLE).unwrap();
 
-        // CLINT
-        map_range(&mut pt, 0x2000000 + PHYSICAL_MEMORY_OFFSET, 0x2010000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
-        
         // PLIC
-        map_range(&mut pt, 0xc000000 + PHYSICAL_MEMORY_OFFSET, 0xc00f000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
-        map_range(&mut pt, 0xc200000 + PHYSICAL_MEMORY_OFFSET, 0xc20f000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
+        map_range(&mut pt, 0x10000000 + PHYSICAL_MEMORY_OFFSET, 0x10003000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
+        map_range(&mut pt, 0x10200000 + PHYSICAL_MEMORY_OFFSET, 0x10202000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
 
-        // UART0, VIRTIO
-        map_range(&mut pt, 0x10000000 + PHYSICAL_MEMORY_OFFSET, 0x1000f000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
+        // GPIO
+        map_range(&mut pt, 0x02000000 + PHYSICAL_MEMORY_OFFSET, 0x02003000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
+        // UART0
+        map_range(&mut pt, 0x02500000 + PHYSICAL_MEMORY_OFFSET, 0x2503000 + PHYSICAL_MEMORY_OFFSET, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
 
 
         //写satp
@@ -292,8 +291,10 @@ lazy_static! {
 /// Put a char by serial interrupt handler.
 fn serial_put(mut x: u8) {
     if x == b'\r' {
-        x = b'\n';
+        //x = b'\n';
+        STDIN.lock().push_back(b'\n');
     }
+
     STDIN.lock().push_back(x);
     STDIN_CALLBACK.lock().retain(|f| !f());
 }
@@ -373,7 +374,7 @@ struct Stdout1;
 impl fmt::Write for Stdout1 {
 	fn write_str(&mut self, s: &str) -> fmt::Result {
 		//每次都创建一个新的Uart ? 内存位置始终相同
-        write!(uart::Uart::new(0x1000_0000 + PHYSICAL_MEMORY_OFFSET), "{}", s).unwrap();
+        write!(uart::Uart::new(0x02500000 + PHYSICAL_MEMORY_OFFSET), "{}", s).unwrap();
 
 		Ok(())
 	}
@@ -444,7 +445,7 @@ pub fn init(config: Config) {
         llvm_asm!("ebreak"::::"volatile");
     }
 
-	bare_println!("Setup virtio @devicetree {:#x}", config.dtb);
+	bare_println!("Device Tree @ {:#x}", config.dtb);
     //virtio::init(config.dtb);
 
     //D1 c906 todo
