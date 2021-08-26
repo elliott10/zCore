@@ -270,8 +270,6 @@ fn super_timer(){
     timer_set_next();
     super::timer_tick();
 
-    bare_print!(".");
-
 	//发生外界中断时，epc的指令还没有执行，故无需修改epc到下一条
 }
 

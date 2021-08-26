@@ -8,6 +8,7 @@ user ?=
 hypervisor ?=
 smp ?= 1
 test_filter ?= *.*
+board ?= qemu
 
 build_args := -Z build-std=core,alloc --target $(arch).json
 build_path := target/$(arch)/$(mode)
@@ -23,6 +24,7 @@ VMDISK := $(build_path)/boot.vdi
 QEMU_DISK := $(build_path)/disk.qcow2
 
 export ARCH=$(arch)
+export USER_IMG = ../$(ARCH).img
 
 ifeq ($(mode), release)
 	build_args += --release
@@ -61,6 +63,10 @@ qemu_opts += \
 	-device virtio-blk-device,drive=sfs \
 	-kernel $(kernel_bin)
 
+endif
+
+ifeq ($(board), D1)
+build_args += --features link_user_img
 endif
 
 ifeq ($(hypervisor), 1)
@@ -110,6 +116,16 @@ build-parallel-test: build $(QEMU_DISK)
 
 ifeq ($(arch), riscv64)
 $(kernel_img): $(kernel_bin)
+
+ifeq ($(board), D1)
+run-thead: build
+	@cp ../prebuilt/fw_jump-0x40020000.bin fw-zCore.bin
+	@dd if=$(kernel_bin) of=fw-zCore.bin bs=1 seek=131072
+	xfel ddr ddr3
+	xfel write 0x40000000 fw-zCore.bin
+	xfel exec 0x40000000
+
+endif
 
 ### k210 使用opensbi
 else
@@ -180,11 +196,3 @@ ifeq ($(arch), riscv64)
 else
 	@qemu-img create -f qcow2 $@ 100M
 endif
-
-run-thead: build
-	@cp ../prebuilt/fw_jump-0x40020000.bin fw-zCore.bin
-	@dd if=$(kernel_bin) of=fw-zCore.bin bs=1 seek=131072
-	xfel ddr ddr3
-	xfel write 0x40000000 fw-zCore.bin
-	xfel exec 0x40000000
-

@@ -38,7 +38,7 @@ pub fn remap_the_kernel(dtb: usize) {
         map_range(&mut pt, sbss as usize, ebss as usize - 1, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
 
         // Heap
-        map_range(&mut pt, end as usize, end as usize + PAGE_SIZE*512, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
+        map_range(&mut pt, end as usize, end as usize + PAGE_SIZE*2048, linear_offset, PTF::VALID | PTF::READABLE | PTF::WRITABLE).unwrap();
 
         // Device Tree
         // D1 c906 todo
@@ -290,12 +290,12 @@ lazy_static! {
 //调用这里
 /// Put a char by serial interrupt handler.
 fn serial_put(mut x: u8) {
-    if x == b'\r' {
-        //x = b'\n';
+    if (x == b'\r') || (x == b'\n') {
         STDIN.lock().push_back(b'\n');
+        STDIN.lock().push_back(b'\r');
+    }else{
+        STDIN.lock().push_back(x);
     }
-
-    STDIN.lock().push_back(x);
     STDIN_CALLBACK.lock().retain(|f| !f());
 }
 

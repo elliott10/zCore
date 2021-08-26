@@ -105,18 +105,10 @@ println!("");
         dtb_addr: device_tree_paddr as u64,
         initramfs_addr: 0,
         initramfs_size: 0,
-        cmdline: "LOG=debug:TERM=xterm-256color:console.shell=true:virtcon.disable=true",
+        cmdline: "LOG=warn:TERM=xterm-256color:console.shell=true:virtcon.disable=true",
     };
 
-    print!("+++ Clearing section .bss ");
-    // 很慢?
-    unsafe {
-        memory::clear_bss();
-    }
-
-    // logging在全志D1 c906上还有问题
-    //logging::init(get_log_level(boot_info.cmdline));
-    warn!("rust_main(), After logging init\n\n");
+    logging::init(get_log_level(boot_info.cmdline));
     memory::init_heap();
     memory::init_frame_allocator(&boot_info);
     remap_the_kernel(device_tree_vaddr);
@@ -136,30 +128,33 @@ println!("");
     //execute_unexecutable_test();
     //read_invalid_test();
 
-    // 正常由bootloader载入文件系统镜像到内存, 这里不用，而使用后面的virtio 
-    /*
+    #[cfg(feature = "link_user_img")]
     let ramfs_data = unsafe {
+        extern {
+            fn _user_img_start();
+            fn _user_img_end();
+        }
         core::slice::from_raw_parts_mut(
-            (boot_info.initramfs_addr + boot_info.physical_memory_offset) as *mut u8,
-            boot_info.initramfs_size as usize,
+            _user_img_start as *mut u8,
+            _user_img_end as usize - _user_img_start as usize,
         )
     };
 
+    #[cfg(not(feature = "link_user_img"))]
+    let ramfs_data = &mut [];
+
     main(ramfs_data, boot_info.cmdline);
-    */
-    main(boot_info.cmdline);
     unreachable!();
 }
 
 #[cfg(feature = "linux")]
-//fn main(ramfs_data: &'static mut [u8], _cmdline: &str) {
-fn main(_cmdline: &str) {
+fn main(ramfs_data: &'static mut [u8], _cmdline: &str) {
     use alloc::boxed::Box;
     use alloc::sync::Arc;
     use alloc::vec;
     use alloc::string::String;
 
-    //use linux_object::fs::MemBuf;
+    use linux_object::fs::MemBuf;
     use linux_object::fs::STDIN;
 
     kernel_hal_bare::serial_set_callback(Box::new({
@@ -168,28 +163,20 @@ fn main(_cmdline: &str) {
             let len = kernel_hal_bare::serial_read(&mut buffer);
             for c in &buffer[..len] {
                 STDIN.push((*c).into());
-                kernel_hal_bare::serial_write(alloc::format!("{}", *c as char).as_str());
+                //kernel_hal_bare::serial_write(alloc::format!("{}", *c as char).as_str());
             }
             false
         }
     }));
 
     let args: Vec<String> = vec!["/bin/busybox".into(), "sh".into()];
-    //let args: Vec<String> = vec!["/bin/busybox".into(), "sh".into()];
     let envs: Vec<String> = vec!["PATH=/usr/sbin:/usr/bin:/sbin:/bin".into()];
 
-    //需先初始化kernel-hal-bare virtio_blk驱动
-
     // ROOT_INODE
-    //let device = Arc::new(MemBuf::new(ramfs_data));
+    #[cfg(feature = "link_user_img")]
+    let device = Arc::new(MemBuf::new(ramfs_data));
 
-    /*
-    let device =
-        BLK_DRIVERS.read().iter()
-        .next().expect("Block device not found")
-        .clone();
-    */
-
+    #[cfg(not(feature = "link_user_img"))]
     let device = {
         let driver = BlockDriverWrapper(
             BLK_DRIVERS.read().iter()
@@ -202,16 +189,26 @@ fn main(_cmdline: &str) {
     // 输入类型: Arc<Device>
     let rootfs = rcore_fs_sfs::SimpleFileSystem::open(device).expect("failed to open device SimpleFS");
 
-    // fat32
-    
-    //let img_file = File::open("fat.img")?;
-    //let fs = fatfs::FileSystem::new(img_file, fatfs::FsOptions::new())?;
-
     let _proc = linux_loader::run(args, envs, rootfs);
     info!("linux_loader is complete");
 
     run();
 }
+
+// Hard link rootfs img
+#[cfg(feature = "link_user_img")]
+global_asm!(concat!(
+    r#"
+	.section .data.img
+	.global _user_img_start
+	.global _user_img_end
+_user_img_start:
+    .incbin ""#,
+    env!("USER_IMG"),
+    r#""
+_user_img_end:
+"#
+));
 
 #[cfg(target_arch = "x86_64")]
 fn run() -> ! {

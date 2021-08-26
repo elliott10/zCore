@@ -9,7 +9,7 @@
 
 #cargo build -Z build-std=core,alloc --target riscv64.json --features linux
 #make run linux=1 arch=riscv64 $@
-make run-thead linux=1 arch=riscv64 $@
+make run-thead linux=1 arch=riscv64 board=D1 $@
 
 ###
 # 

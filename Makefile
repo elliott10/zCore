@@ -58,5 +58,6 @@ ifeq ($(wildcard prebuilt/linux/riscv64/busybox),)
 	@wget https://github.com/rcore-os/busybox-prebuilts/raw/master/busybox-1.30.1-riscv64/busybox -O prebuilt/linux/riscv64/busybox
 endif
 	@cp prebuilt/linux/riscv64/* rootfs/bin/
+	@ln -s busybox rootfs/bin/ls
 	@@rcore-fs-fuse riscv64.img rootfs zip
-	@qemu-img resize riscv64.img +50M
+	@qemu-img resize riscv64.img +2M
