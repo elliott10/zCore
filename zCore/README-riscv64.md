@@ -8,7 +8,7 @@
 ```
 make rv64-image
 cd zCore
-make build linux=1 arch=riscv64
+make build linux=1 arch=riscv64 board=D1
 
 ```
 
@@ -38,7 +38,7 @@ sudo xfel exec 0x40000000
 
 或者在安装好工具xfel，开发板进入FEL模式后，直接运行：
 ```
-make run-thead linux=1 arch=riscv64
+make run-thead linux=1 arch=riscv64 board=D1
 ```
 
 ## 引导运行
@@ -77,6 +77,25 @@ PMP4    : 0x0000000000000000-0x000000003fffffff (A,R,W)
 /___|\____\___/|_|  \___|
 
 Welcome to zCore rust_main( hartid: 0x0, device_tree_paddr: 0x44ddc )
+Uart output testing
++++ Setting up UART interrupts +++
++++ Setting up PLIC +++
++++ setup interrupt +++
+Exception::Breakpoint: A breakpoint set @0xffffffffc0167f56 
+Device Tree @ 0x0
+[138.8430296s  WARN 0 0:0] elf relocate Err:".rela.dyn not found"
+[139.2137079s  WARN 0 0:0] brk: unimplemented
+[139.8335662s  WARN 0 0:0] TCGETS | TIOCGWINSZ | TIOCSPGRP, pretend to be tty.
+[140.5358217s  WARN 0 0:0] TIOCGPGRP, pretend to be have a tty process group.
+[140.6017734s  WARN 0 0:0] getpgid: unimplemented
+[140.8971624s  WARN 0 0:0] setpgid: unimplemented
+/ #
+/ # ls
+bin  dev  tmp
+/ # hello
+Hello world from user mode program!
+                                   By xiaoluoyuan@163.com
+/ # 
 
 ```
 
