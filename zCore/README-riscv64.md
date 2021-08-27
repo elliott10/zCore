@@ -24,8 +24,8 @@ make
 
 生成包含了opensbi和zCore的待烧写固件:
 ```
-cp ../prebuilt/fw_jump-0x45000000.bin fw-zCore.bin
-dd if=target/riscv64/debug/zcore.bin of=fw-zCore.bin bs=1 seek=83886080
+cp ../prebuilt/fw_jump-0x40020000.bin fw-zCore.bin
+dd if=target/riscv64/debug/zcore.bin of=fw-zCore.bin bs=1 seek=131072
 ```
 
 启动全志D1 c906开发板，并进入FEL模式。可在开发板的Linux系统中执行`reboot efex`命令进入FEL模式。<br>
