@@ -1,8 +1,9 @@
 use kernel_hal::drivers::NET_DRIVERS;
 use kernel_hal::drivers::SOCKETS;
-use kernel_hal::NetDriver;
+use kernel_hal::{NetDriver, Thread, yield_now};
 use alloc::vec;
 use alloc::sync::Arc;
+use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use core::fmt::Write;
 use smoltcp::socket::*;
@@ -10,30 +11,35 @@ use smoltcp::time::Instant;
 use smoltcp::iface::{InterfaceBuilder, NeighborCache};
 use smoltcp::wire::{IpAddress, IpCidr};
 
-pub extern "C" fn server(_arg: usize) -> ! {
+async fn server(_arg: usize) {
 
     //判断Vec中是否有保存初始化好的驱动
     if NET_DRIVERS.read().len() < 1 {
         loop {
-            //thread::yield_now();
+            #[cfg(target_arch = "riscv64")]
+            kernel_hal_bare::interrupt::wait_for_interrupt();
+            //让另外一个shell线程在陷入syscall时，也可以接收到中断
+
+            trace!("NO NET DRIVERS !");
+            yield_now().await;
         }
     }
 
-    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface;
+    //use kernel_hal_bare::drivers::net::virtio_net::VirtIONetDriver as DriverInterface;
+    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
 
     // Ref: https://github.com/elliott10/rCore/blob/6f1953b9773d66cf7ab831c345a44e89036751c1/kernel/src/net/test.rs
     let driver = {
         //选第一个网卡驱动
         let ref_driver = Arc::clone(&NET_DRIVERS.write()[0]);
                                             //需实现Clone
-        ref_driver.as_any().downcast_ref::<RTL8xInterface>().unwrap().clone()
+        ref_driver.as_any().downcast_ref::<DriverInterface>().unwrap().clone()
     };
     let ethernet_addr = driver.get_mac();
     let ifname = driver.get_ifname();
 
     debug!("NET_DRIVERS read OK!\n{} MAC: {:x?}", ifname, ethernet_addr);
     debug!("IP address: {:?}", driver.get_ip_addresses());
-
     let mut iface = driver.iface.lock();
 
     /*
@@ -141,6 +147,15 @@ pub extern "C" fn server(_arg: usize) -> ! {
         //一般大量循环打印是正常状态
         trace!("--- loop() ---");
 
-        //thread::yield_now();
+        #[cfg(target_arch = "riscv64")]
+        kernel_hal_bare::interrupt::wait_for_interrupt();
+
+        yield_now().await;
     }
+}
+
+pub fn net_start_thread() {
+    let pin_future = Box::pin(server(0));
+    let vmtoken = kernel_hal::current_page_table();
+    Thread::spawn(pin_future, vmtoken);
 }

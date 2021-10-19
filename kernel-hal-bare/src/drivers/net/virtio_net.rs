@@ -159,6 +159,8 @@ pub fn init(node: &Node, header: &'static mut VirtIOHeader) {
 
     let driver = Arc::new(device);
 
+    /*
+    // Enable VirtIO Network interrupt
     let mut found = false;
     let irq_opt = node.prop_u32("interrupts").ok().map(|irq| irq as usize);
 
@@ -176,7 +178,6 @@ pub fn init(node: &Node, header: &'static mut VirtIOHeader) {
         IRQ_MANAGER.write().register_opt(irq_opt, driver.clone());
     }
 
-    /*
     {
         let mut buffer = [0u8; 2000];
         let mut dri = driver.0.lock();

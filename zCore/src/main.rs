@@ -196,18 +196,17 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
     let args: Vec<String> = get_rootproc(cmdline);
     let envs: Vec<String> = vec!["PATH=/usr/sbin:/usr/bin:/sbin:/bin".into()];
 
-    /*
-    let rootfs = fs::init_filesystem(ramfs_data);
-    let _proc = linux_loader::run(args, envs, rootfs);
-    */
+    use linux_object::net::test::net_start_thread;
+    net_start_thread();
 
     info!("linux_loader run linux proc +++");
-    use linux_object::net::test::server;
-    server(0);
-
     /* 用户程序无法访问内核的代码？？？ 页表：USER
     linux_loader::run_linux_proc(vec!["run_linux_proc".into()], server as usize);
     */
+
+    let rootfs = fs::init_filesystem(ramfs_data);
+    let _proc = linux_loader::run(args, envs, rootfs);
+
     info!("linux_loader is complete");
 
     run();
@@ -221,6 +220,9 @@ fn run() -> ! {
             x86_64::instructions::interrupts::enable_and_hlt();
             x86_64::instructions::interrupts::disable();
         }
+
+        //运行到这无中断? 故调用如下函数
+        //因在内核态处理syscall时，无法响应中断
         #[cfg(target_arch = "riscv64")]
         kernel_hal_bare::interrupt::wait_for_interrupt();
     }
