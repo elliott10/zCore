@@ -153,7 +153,7 @@ pub fn handle_interrupt() {
 pub fn init_dt(dt: &Node) {
     let addr = dt.prop_usize("reg").unwrap();
     let base = phys_to_virt(addr);
-    info!("Init Uart at {:#x}", base);
+    info!("Found Uart at {:#x}", base);
 
     let mut us = Uart::new(base);
     us.simple_init();

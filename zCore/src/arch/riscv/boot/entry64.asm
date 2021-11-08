@@ -5,10 +5,11 @@ _start:
 	csrw sie, zero
 
 	#关闭mmu
-	#csrw satp, zero
+	csrw satp, zero
 
 	#BSS节清零
-	la t0, sbss
+	#la t0, sbss
+	la t0, sstack
 	la t1, ebss
 	bgeu t0, t1, 2f
 
@@ -19,6 +20,8 @@ _start:
 	bltu t0, t1, 1b
 	
 2:
+
+	#fence rw, rw
 
 	#la sp, bootstacktop
 	#call rust_main

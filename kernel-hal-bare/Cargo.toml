@@ -13,7 +13,7 @@ board_d1 = []
 
 [dependencies]
 log = "0.4"
-spin = "0.7"
+spin = "0.9"
 git-version = "0.3"
 executor = { git = "https://github.com/rcore-os/executor.git", rev = "a2d02ee9" }
 trapframe = "0.8.0"
@@ -26,7 +26,10 @@ device_tree = { git = "https://github.com/rcore-os/device_tree-rs" }
 virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers", rev = "568276" }
 isomorphic_drivers = { git = "https://github.com/rcore-os/isomorphic_drivers", rev = "fcf694d2", features = ["log"] }
 #isomorphic_drivers = { path = "/home/xly/rust/arch-lib/isomorphic_drivers", features = ["log"] }
-smoltcp = { git = "https://github.com/smoltcp-rs/smoltcp", rev = "35e833e3", default-features = false, features = ["log", "alloc", "verbose", "proto-ipv4", "proto-igmp", "medium-ip", "medium-ethernet", "socket-raw", "socket-udp", "socket-tcp", "socket-icmp"] }
+smoltcp = { git = "https://github.com/smoltcp-rs/smoltcp", rev = "35e833e3", default-features = false, features = ["log", "alloc", "verbose", "proto-ipv4", "proto-ipv6", "proto-igmp", "medium-ip", "medium-ethernet", "socket-raw", "socket-udp", "socket-tcp", "socket-icmp"] }
+
+object = { version = "0.23.0", default-features = false, features = ["read_core", "elf"]}
+addr2line = { version = "0.14.1", default-features = false, features = ["rustc-demangle"]}
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86_64 = "0.14"

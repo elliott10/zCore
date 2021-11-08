@@ -3,6 +3,7 @@
 
 use {bitmap_allocator::BitAlloc, buddy_system_allocator::LockedHeap, spin::Mutex};
 use crate::arch::consts::*;
+use alloc::slice;
 
 #[cfg(target_arch = "x86_64")]
 use {
@@ -143,6 +144,62 @@ pub extern "C" fn hal_pt_map_kernel(pt: &mut PageTable, current: &PageTable) {
 
 // First core stores its SATP here.
 static mut SATP: usize = 0;
+
+
+static MUTEX_TT: Mutex<u32> = Mutex::new(99);
+pub fn mutex_test() {
+    println!("mutex test");
+
+        {
+            let ha = &HEAP_ALLOCATOR as *const _ as usize;
+            println!("HEAP_ALLOCATOR addr {:#x}, ptr: {:p}", ha, &HEAP_ALLOCATOR);
+            let hs = unsafe {
+                slice::from_raw_parts(
+                    ha as *const u8,
+                    64)
+            };
+
+            for i in 0..hs.len() {
+                if i%32 == 0 {
+                    print!("\n");
+                }
+                print!("{:02x}", hs[i]);
+            }
+            print!("\n");
+        }
+
+        {
+            let ha = &FRAME_ALLOCATOR as *const _ as usize;
+            println!("FRAME_ALLOCATOR addr {:#x}, ptr: {:p}", ha, &FRAME_ALLOCATOR);
+            let hs = unsafe {
+                slice::from_raw_parts(
+                    ha as *const u8,
+                    64)
+            };
+
+            for i in 0..hs.len() {
+                if i%32 == 0 {
+                    print!("\n");
+                }
+                print!("{:02x}", hs[i]);
+            }
+            print!("\n");
+        }
+
+    let mutex = Mutex::new(5);
+    {
+        let mut num = mutex.lock();
+        *num = 6;
+    }
+    println!("mutex = {:?}", mutex);
+
+    let mut tt = MUTEX_TT.lock();
+    *tt = 88;
+
+    drop(tt);
+    println!("MUTEX TT: {:?}", MUTEX_TT);
+}
+
 
 #[cfg(target_arch = "riscv64")]
 pub unsafe fn clear_bss() {

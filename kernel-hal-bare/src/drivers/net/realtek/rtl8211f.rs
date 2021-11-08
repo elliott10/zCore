@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use crate::arch::cpu_C906::{flush_cache, invalidate_dcache, fence_w};
+use crate::arch::cpu_C906::{flush_cache, invalidate_dcache, fence_w, msdelay};
 use super::mii::*;
 
 use core::mem::size_of;
@@ -747,7 +747,7 @@ impl<P> RTL8211F<P> where P: Provider {
             rx_bytes += frame_len as u64;
         }
 
-        info!("RX DMA State: {:#x}", read_volatile((self.base + GETH_RX_DMA_STA) as *mut u32));
+        info!("RX DMA State: {:#x}, recv packets: {}", read_volatile((self.base + GETH_RX_DMA_STA) as *mut u32), rx_packets);
 
         if rxcount > 0 {
             info!("######### RX Descriptor DMA: {:#x}", self.recv_ring.as_ptr() as usize);
@@ -922,7 +922,9 @@ impl<P> RTL8211F<P> where P: Provider {
             entry = self.tx_clean;
             let mut desc = &mut self.send_ring[entry];
 
+            invalidate_dcache(virt_to_phys(desc as *const dma_desc as usize) as u64, size_of::<dma_desc>() as u64);
             if desc_get_own(desc) != 0 {
+                warn!("tx_complete get desc own failed !");
                 break;
             }
 
@@ -942,11 +944,21 @@ impl<P> RTL8211F<P> where P: Provider {
 
             // dma_unmap_single
 
-            //self.send_buffers[entry] = 0;
+            //self.send_buffers[entry], clear 2k
+            unsafe {
+                slice::from_raw_parts_mut(
+                    self.send_buffers[entry] as *mut u8,
+                    2048)
+                    .fill(0);
+            }
+            flush_cache(virt_to_phys(self.send_buffers[entry]) as u64, 2048);
 
+            // 注意不要把desc2的Buffer Addr清零了
             desc_init(desc);
             self.tx_clean = (entry + 1) % DMA_DESC_TX;
         }
+
+        debug!("send packets: {}, send errors: {}", tx_packets, tx_errors);
     }
 
     // Enable and Restart Autonegotiation
@@ -1471,9 +1483,10 @@ pub fn desc_buf_set(desc: &mut dma_desc, paddr: u32, size: u32) {
 
 pub fn desc_init(desc: &mut dma_desc) {
     desc.desc1 = 0;
-    desc.desc2 = 0;
-
     desc.desc1 |= (1 << 24);
+
+    // 这里用的Buffer Addr不发生改变
+    //desc.desc2 = 0;
 }
 
 fn read_volatile<T>(src: *const T) -> T {
@@ -1518,8 +1531,15 @@ pub fn print_hex_dump(buf: &[u8], len: usize) {
 pub fn init() {
 
     //EAPOL packet: 0007326b9940 ca9027e0a80f 888e020000050104000501
+    /*
     let frame: Box<[u8]> = Box::new(
         [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x52, 0x54, 0x00, 0x12, 0x34, 0x56,
+        0x88, 0x8e, 0x02, 0x00, 0x00, 0x05, 0x01, 0x04, 0x00, 0x05, 0x01]
+        );
+    */
+
+    let frame: Box<[u8]> = Box::new(
+        [0x30, 0xf9, 0xed, 0xbc, 0x45, 0x98, 0x52, 0x54, 0x00, 0x12, 0x34, 0x56,
         0x88, 0x8e, 0x02, 0x00, 0x00, 0x05, 0x01, 0x04, 0x00, 0x05, 0x01]
         );
 
@@ -1537,16 +1557,25 @@ pub fn init() {
     }
 
     debug!("cycle start :::");
+    let mut n = 0;
     let c = crate::arch::get_cycle();
-    while crate::arch::get_cycle() < c + 100_000_000 {
+    //while crate::arch::get_cycle() < c + 100_000_000 {
+    loop {
         let (buffer, work_done) = rtl8211f.geth_recv(BUDGET);
         if !buffer.is_empty() {
+            n += 1;
+            debug!("Recv frame {}", n);
             print_hex_dump(&buffer, 32);
         }
     }
-    debug!("Send two network frames :::");
-    rtl8211f.geth_send(&frame);
-    rtl8211f.geth_send(&frame);
+    debug!("Send network frames :::");
+    //rtl8211f.geth_send(&frame);
+
+    for i in 0..520 {
+        debug!("Send frame {}", i);
+        rtl8211f.geth_send(&frame);
+        msdelay(200);
+    }
 
     loop{}
 }

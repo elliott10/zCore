@@ -56,6 +56,27 @@ async fn server(_arg: usize) {
         .finalize();
     */
 
+    // Ethernet Frame testing
+
+    //需要std ???
+    /*
+    let ifname = env::args().nth(1).unwrap();
+    let mut socket = RawSocket::new(ifname.as_ref()).unwrap();
+    loop {
+        phy_wait(socket.as_raw_fd(), None).unwrap();
+        let (rx_token, _) = socket.receive().unwrap();
+        rx_token
+            .consume(Instant::now(), |buffer| {
+                println!(
+                    "{}",
+                    PrettyPrinter::<EthernetFrame<&[u8]>>::new("", &buffer)
+                );
+                Ok(())
+            })
+            .unwrap();
+    }
+    */
+
     let udp_rx_buffer = UdpSocketBuffer::new(vec![UdpPacketMetadata::EMPTY], vec![0; 64]);
     let udp_tx_buffer = UdpSocketBuffer::new(vec![UdpPacketMetadata::EMPTY], vec![0; 128]);
     let udp_socket = UdpSocket::new(udp_rx_buffer, udp_tx_buffer);

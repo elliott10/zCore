@@ -26,11 +26,12 @@ SECTIONS
 
     .data : {
         sdata = .;
-        *(.data .data.*)
+        *(.data .data.* .sdata)
         edata = .;
     }
 
     .stack : {
+        sstack = .;
         *(.bss.stack)
         . = ALIGN(4K);
     }

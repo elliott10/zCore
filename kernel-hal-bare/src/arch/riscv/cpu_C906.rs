@@ -61,3 +61,21 @@ pub fn fence_w() {
         llvm_asm!("fence ow, ow" ::: "memory");
     }
 }
+
+// Timer, Freq = 24000000Hz
+// TIMER_CLOCK = (24 * 1000 * 1000)
+// 微秒(us)
+pub fn usdelay(us: u64) {
+    let mut t1: u64 = super::get_cycle();
+    let t2 = t1 + us*24;
+
+    while t2 >= t1 {
+        t1 = super::get_cycle();
+    }
+}
+
+// 毫秒(ms)
+pub fn msdelay(ms: u64) {
+    usdelay(ms * 1000);
+}
+

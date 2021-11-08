@@ -542,19 +542,20 @@ pub fn get_cycle() -> u64 {
     */
 }
 
+const FREQUENCY: u64 = 24_000_000; // C906: 24_000_000, Qemu: 10_000_000
+
 #[export_name = "hal_timer_now"]
 pub fn timer_now() -> Duration {
-    const FREQUENCY: u64 = 10_000_000; // ???
     let time = get_cycle();
     //bare_println!("timer_now(): {:?}", time);
-    //Duration::from_nanos(time * 1_000_000_000 / FREQUENCY as u64)
-    Duration::from_nanos(time as u64)
+    Duration::from_nanos((time * (1_000_000_000 / FREQUENCY)) as u64)
 }
 
 #[export_name = "hal_timer_set_next"]
 fn timer_set_next() {
-    //let TIMEBASE: u64 = 100000;
-    let TIMEBASE: u64 = 250000;
+    // 100Hz timer irq
+    let hz = 100;
+    let TIMEBASE: u64 = FREQUENCY / hz;
     sbi::set_timer(get_cycle() + TIMEBASE);
 }
 
@@ -676,6 +677,7 @@ pub struct GraphicInfo {
 }
 
 pub mod interrupt;
+pub mod backtrace;
 mod plic;
 mod uart;
 

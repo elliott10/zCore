@@ -100,7 +100,12 @@ fn main(ramfs_data: &[u8], cmdline: &str) -> ! {
 #[no_mangle]
 pub extern "C" fn rust_main(hartid: usize, device_tree_paddr: usize) -> ! {
     println!("zCore rust_main( hartid: {}, device_tree_paddr: {:#x} )", hartid, device_tree_paddr);
+
+    #[cfg(not(feature = "board_d1"))]
     let device_tree_vaddr = phys_to_virt(device_tree_paddr);
+
+    #[cfg(feature = "board_d1")]
+    let device_tree_vaddr = 0;
 
     let boot_info = BootInfo {
         memory_map: Vec::new(),
@@ -197,7 +202,9 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
     let envs: Vec<String> = vec!["PATH=/usr/sbin:/usr/bin:/sbin:/bin".into()];
 
     use linux_object::net::test::net_start_thread;
-    net_start_thread();
+    //net_start_thread();
+
+    linux_object::net::net_ping_thread();
 
     info!("linux_loader run linux proc +++");
     /* 用户程序无法访问内核的代码？？？ 页表：USER

@@ -51,6 +51,11 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     let is_int = scause.bits() >> 63;
     let code = scause.bits() & !(1 << 63);
 
+    if (is_int == 0) && (code != 8) && (code != 9) {
+        use super::backtrace::print_backtrace;
+        print_backtrace(tf);
+    }
+
     match scause.cause() {
         Trap::Exception(Exception::Breakpoint) => breakpoint(&mut tf.sepc),
         Trap::Exception(Exception::IllegalInstruction) => {

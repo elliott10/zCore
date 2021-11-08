@@ -26,6 +26,7 @@ QEMU_DISK := $(build_path)/disk.qcow2
 export ARCH=$(arch)
 export BOARD=$(board)
 export USER_IMG=$(ARCH).img
+export RUSTFLAGS = -C force-frame-pointers=yes # backtrace
 
 ifeq ($(arch), riscv64)
 ifeq ($(board), d1)
@@ -156,6 +157,11 @@ run-thead: build
 	xfel ddr ddr3
 	xfel write 0x40000000 fw-zCore.bin
 	xfel exec 0x40000000
+
+build-thead: build
+	@cp ../prebuilt/firmware/fw_jump-0x40100000.bin fw-zCore.bin
+	@dd if=$(kernel_bin) of=fw-zCore.bin bs=512 seek=2048
+	@echo D1 board sdcard image: fw-zCore.bin
 endif
 
 else
@@ -177,7 +183,7 @@ endif
 
 kernel:
 	echo Building zCore kenel
-	cargo build $(build_args)
+	cargo build -vv $(build_args)
 
 bootloader:
 	cd ../rboot && make build

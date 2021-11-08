@@ -20,8 +20,9 @@ lto = true
 
 [dependencies]
 log = "0.4"
-spin = "0.7"
-buddy_system_allocator = "0.7"
+spin = "0.9"
+#buddy_system_allocator = { git = "https://github.com/rcore-os/buddy_system_allocator.git", rev = "9c6e36ab" }
+buddy_system_allocator = { path = "/home/xly/rust/arch-lib/buddy_system_allocator" }
 kernel-hal-bare = { path = "../kernel-hal-bare" }
 lazy_static = { version = "1.4", features = ["spin_no_std" ] }
 bitmap-allocator = { git = "https://github.com/rcore-os/bitmap-allocator", rev = "03bd9909" }

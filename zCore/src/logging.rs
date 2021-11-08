@@ -3,19 +3,6 @@ use {
     log::{self, Level, LevelFilter, Log, Metadata, Record},
 };
 
-pub fn init(level: &str) {
-    static LOGGER: SimpleLogger = SimpleLogger;
-    log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(match level {
-        "error" => LevelFilter::Error,
-        "warn" => LevelFilter::Warn,
-        "info" => LevelFilter::Info,
-        "debug" => LevelFilter::Debug,
-        "trace" => LevelFilter::Trace,
-        _ => LevelFilter::Off,
-    });
-}
-
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ({
@@ -34,6 +21,20 @@ macro_rules! with_color {
     ($args: ident, $color_code: ident) => {{
         format_args!("\u{1B}[{}m{}\u{1B}[0m", $color_code as u8, $args)
     }};
+}
+
+pub fn init(level: &str) {
+    static LOGGER: SimpleLogger = SimpleLogger;
+    log::set_logger(&LOGGER).unwrap();
+    log::set_max_level(match level {
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
+        _ => LevelFilter::Off,
+    });
+    println!("logging init");
 }
 
 fn print_in_color(args: fmt::Arguments, color_code: u8) {
