@@ -1,10 +1,10 @@
-arch ?= x86_64
-board ?= qemu
-mode ?= debug
+arch ?= riscv64
+board ?= d1
+mode ?= release
 zbi_file ?= bringup
 graphic ?=
 accel ?=
-linux ?=
+linux ?= 1
 user ?=
 hypervisor ?=
 smp ?= 1
@@ -30,7 +30,7 @@ export USER_IMG=$(ARCH).img
 
 ifeq ($(arch), riscv64)
 ifeq ($(board), d1)
-build_args += --features board_d1 --features link_user_img
+build_args += --features board_d1
 else
 build_args += --features board_qemu
 endif
@@ -130,7 +130,7 @@ qemu_opts += -display none -nographic
 baremetal-test-qemu_opts += -display none -nographic
 endif
 endif
-
+run-d1: build run-thead
 run: build justrun
 test: build-test justrun
 debug: build debugrun
@@ -158,8 +158,8 @@ $(kernel_img): $(kernel_bin)
 
 ifeq ($(board), d1)
 run-thead: build
-	cp ../prebuilt/firmware/fw_jump-0x40020000.bin fw-zCore.bin
-	dd if=$(kernel_bin) of=fw-zCore.bin bs=1 seek=131072
+	cp ../prebuilt/firmware/fw_jump.bin fw-zCore.bin
+	dd if=$(kernel_bin) of=fw-zCore.bin bs=1k seek=128
 	xfel ddr ddr3
 	xfel write 0x40000000 fw-zCore.bin
 	xfel exec 0x40000000
