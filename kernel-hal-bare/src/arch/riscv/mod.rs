@@ -10,7 +10,7 @@ use riscv::register::{satp, sie, stval, time};
 use alloc::{collections::VecDeque, string::String, vec, vec::Vec};
 use core::fmt::{self, Write};
 
-use crate::drivers::{device_tree::{self, Node}, irq, net, serial, virtio};
+use crate::drivers::{device_tree::{self, Node}, irq, bus::pci, net, serial, virtio};
 
 mod sbi;
 mod consts;
@@ -87,6 +87,17 @@ pub fn remap_the_kernel(dtb: usize) {
     )
     .unwrap();
     info!("... Heap");
+
+    // PCI
+    #[cfg(feature = "board_qemu")]
+    map_range(
+        &mut pt,
+        phys_to_virt(PCI_BASE) as usize,
+        phys_to_virt(PCI_BASE) as usize + PAGE_SIZE * 16,
+        linear_offset,
+        PTF::VALID | PTF::READABLE | PTF::WRITABLE,
+    )
+    .unwrap();
 
     // Device Tree
     #[cfg(feature = "board_qemu")]
@@ -579,8 +590,13 @@ pub fn init(config: Config) {
     }
     */
 
+
     #[cfg(feature = "board_qemu")]
     {
+        // "pci-host-ecam-generic"
+        // 没有成功扫描出PCI设备
+        // pci::init();
+
         bare_println!("Setup virtio @devicetree {:#x}", config.dtb);
 
         irq::plic::driver_init();

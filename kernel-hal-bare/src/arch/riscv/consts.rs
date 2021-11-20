@@ -23,6 +23,9 @@ pub const MMIO_MTIMECMP0: *mut u64 = 0x0200_4000usize as *mut u64;
 pub const MMIO_MTIME: *const u64 = 0x0200_BFF8 as *const u64;
 
 #[cfg(feature = "board_qemu")]
+pub const PCI_BASE: usize = 0x30000000;
+
+#[cfg(feature = "board_qemu")]
 pub const UART_BASE:       usize = 0x10000000;
 #[cfg(feature = "board_qemu")]
 pub const UART0_INT_NUM:     u32 = 10;

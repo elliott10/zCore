@@ -1,14 +1,14 @@
 //! RISC-V plic
 
 pub use kernel_hal::drivers::{Driver, DeviceType, DRIVERS};
-use super::{super::IRQ_MANAGER, IntcDriver, IrqManager};
+use super::{IntcDriver, IrqManager};
 use crate::drivers::{
     device_tree::DEVICE_TREE_INTC, device_tree::DEVICE_TREE_REGISTRY,
 };
+use super::super::{IRQ_MANAGER, write, read};
 use crate::phys_to_virt;
 //use crate::{sync::SpinNoIrqLock as Mutex, util::read, util::write};
 use spin::Mutex;
-use core::ptr::{read_volatile, write_volatile};
 use alloc::format;
 use alloc::string::String;
 use alloc::sync::Arc;
@@ -94,18 +94,4 @@ pub fn init_dt(dt: &Node) {
 
 pub fn driver_init() {
     DEVICE_TREE_REGISTRY.write().insert("riscv,plic0", init_dt);
-}
-
-#[inline(always)]
-pub fn write<T>(addr: usize, content: T) {
-    let cell = (addr) as *mut T;
-    unsafe {
-        write_volatile(cell, content);
-    }
-}
-
-#[inline(always)]
-pub fn read<T>(addr: usize) -> T {
-    let cell = (addr) as *const T;
-    unsafe { read_volatile(cell) }
 }

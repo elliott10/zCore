@@ -5,6 +5,7 @@ use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use rcore_fs::dev::{self, BlockDevice, DevError};
 use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv4Address};
+use core::ptr::{read_volatile, write_volatile};
 use spin::RwLock;
 
 pub use kernel_hal::drivers::{BlockDriver, BLK_DRIVERS};
@@ -18,7 +19,7 @@ pub use serial::SerialDriver;
 /// Block device
 //pub mod block;
 /// Bus controller
-//pub mod bus;
+pub mod bus;
 /// Character console
 //pub mod console;
 /// Device tree
@@ -131,4 +132,18 @@ lazy_static! {
 lazy_static! {
     // Write only once at boot
     pub static ref CMDLINE: RwLock<String> = RwLock::new(String::new());
+}
+
+#[inline(always)]
+pub fn write<T>(addr: usize, content: T) {
+    let cell = (addr) as *mut T;
+    unsafe {
+        write_volatile(cell, content);
+    }
+}
+
+#[inline(always)]
+pub fn read<T>(addr: usize) -> T {
+    let cell = (addr) as *const T;
+    unsafe { read_volatile(cell) }
 }
