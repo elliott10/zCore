@@ -29,7 +29,10 @@ mod memory;
 mod fs;
 
 #[cfg(target_arch = "x86_64")]
+#[cfg(not(feature = "grub"))]
 use rboot::BootInfo;
+#[cfg(feature = "grub")]
+use bootloader::bootinfo::BootInfo;
 
 #[cfg(target_arch = "riscv64")]
 use kernel_hal_bare::{
@@ -55,12 +58,29 @@ global_asm!(include_str!("arch/riscv/boot/entry64.asm"));
 #[cfg(target_arch = "x86_64")]
 #[no_mangle]
 pub extern "C" fn _start(boot_info: &BootInfo) -> ! {
-    logging::init(get_log_level(boot_info.cmdline));
+    #[cfg(not(feature = "grub"))]
+    let cmdline = boot_info.cmdline;
+
+    #[cfg(feature = "grub")]
+    let cmdline = "LOG=debug";
+
+    logging::init(get_log_level(cmdline));
     memory::init_heap();
     memory::init_frame_allocator(boot_info);
 
-    trace!("{:#x?}", boot_info);
+    info!("{:#x?}", boot_info);
+    warn!("cmdline: {:?}", cmdline);
 
+    #[cfg(feature = "grub")]
+    {
+        kernel_hal_bare::init(
+            kernel_hal_bare::Config{ acpi_rsdp: 0, smbios: 0, ap_fn: run, }
+            );
+        main(&mut [], cmdline);
+    }
+
+    #[cfg(not(feature = "grub"))]
+    {
     kernel_hal_bare::init(kernel_hal_bare::Config {
         acpi_rsdp: boot_info.acpi2_rsdp_addr,
         smbios: boot_info.smbios_addr,
@@ -81,7 +101,8 @@ pub extern "C" fn _start(boot_info: &BootInfo) -> ! {
             boot_info.initramfs_size as usize,
         )
     };
-    main(ramfs_data, boot_info.cmdline);
+    main(ramfs_data, cmdline);
+    }
 }
 
 #[cfg(feature = "zircon")]
@@ -201,10 +222,13 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
     let args: Vec<String> = get_rootproc(cmdline);
     let envs: Vec<String> = vec!["PATH=/usr/sbin:/usr/bin:/sbin:/bin".into()];
 
+    #[cfg(target_arch = "riscv64")]
+    {
     use linux_object::net::test::net_start_thread;
     //net_start_thread();
 
     linux_object::net::net_ping_thread();
+    }
 
     info!("linux_loader run linux proc +++");
     /* 用户程序无法访问内核的代码？？？ 页表：USER
@@ -221,6 +245,7 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
 
 fn run() -> ! {
     loop {
+        trace!("Run idle");
         executor::run_until_idle();
         #[cfg(target_arch = "x86_64")]
         {

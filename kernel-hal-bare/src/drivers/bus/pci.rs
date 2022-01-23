@@ -171,6 +171,14 @@ pub fn init_driver(dev: &PCIDevice) {
                 return;
             }
         }
+        (0x8086, 0x1533) => {
+            if let Some(BAR::Memory(addr, len, _, _)) = dev.bars[0] {
+                warn!("Intel Corporation I210 Gigabit Network Connection");
+                error!("DEV: {:?}, BAR0: {:#x}", dev, addr);
+                return;
+            }
+        }
+
         _ => {}
     }
     if dev.id.class == 0x01 && dev.id.subclass == 0x06 {
@@ -207,7 +215,8 @@ pub fn detach_driver(loc: &Location) -> bool {
 
 pub fn init() {
     let pci_iter = unsafe { scan_bus(&PortOpsImpl, CSpaceAccessMethod::IO) };
-    //debug!("scan bus: {:#?}", pci_iter);
+    info!("");
+    info!("--------- PCI bus:device:function ---------");
     for dev in pci_iter {
         info!(
             "pci: {:02x}:{:02x}.{} {:#x} {:#x} ({} {}) irq: {}:{:?}",
@@ -223,6 +232,7 @@ pub fn init() {
         );
         init_driver(&dev);
     }
+    info!("");
 }
 
 pub fn find_device(vendor: u16, product: u16) -> Option<Location> {

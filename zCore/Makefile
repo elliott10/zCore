@@ -9,12 +9,14 @@ user ?=
 hypervisor ?=
 smp ?= 1
 test_filter ?= *.*
+grub ?=
 
 build_args := -Z build-std=core,alloc --target $(arch).json
 build_path := target/$(arch)/$(mode)
 kernel := $(build_path)/zcore
 kernel_img := $(build_path)/zcore.img
 kernel_bin := $(build_path)/zcore.bin
+kernel_grub := $(build_path)/bootimage-zcore.bin
 ESP := $(build_path)/esp
 OVMF := ../rboot/OVMF.fd
 qemu := qemu-system-$(arch)
@@ -52,6 +54,19 @@ qemu_opts := \
 qemu_net_opts :=
 
 ifeq ($(arch), x86_64)
+
+ifeq ($(grub), 1)
+build_args += --features grub
+qemu_opts += \
+	-machine q35 \
+	-cpu Haswell,+smap,-check,-fsgsbase \
+	-hda $(kernel_grub) \
+	-serial mon:stdio \
+	-m 1G \
+	-nic none \
+	-device isa-debug-exit,iobase=0xf4,iosize=0x04
+
+else
 qemu_opts += \
 	-machine q35 \
 	-cpu Haswell,+smap,-check,-fsgsbase \
@@ -64,6 +79,8 @@ qemu_opts += \
 	-m 4G \
 	-nic none \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04
+endif
+
 baremetal-test-qemu_opts += \
 	-machine q35 \
 	-cpu Haswell,+smap,-check,-fsgsbase \
@@ -74,6 +91,7 @@ baremetal-test-qemu_opts += \
 	-m 4G \
 	-nic none \
 	-device isa-debug-exit,iobase=0xf4,iosize=0x04
+
 else ifeq ($(arch), riscv64)
 qemu_opts += \
 	-machine virt \
@@ -184,6 +202,9 @@ endif
 kernel:
 	echo Building zCore kenel
 	cargo build -vv $(build_args)
+ifeq ($(grub), 1)
+	cargo bootimage $(build_args)
+endif
 
 bootloader:
 	cd ../rboot && make build

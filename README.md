@@ -87,7 +87,7 @@ make image
 ##### step3: build and run zcore in  linux-bare-metal mode:
 
 ```sh
-cd zCore && make run mode=release linux=1 [graphic=on] [accel=1]
+cd zCore && make run mode=release linux=1 [graphic=on] [accel=1] [grub=1]
 ```
 
 #### Run Zircon shell in zircon-bare-metal mode:

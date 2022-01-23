@@ -6,10 +6,15 @@ use crate::arch::consts::*;
 use alloc::slice;
 
 #[cfg(target_arch = "x86_64")]
-use {
-    rboot::{BootInfo, MemoryType},
-    x86_64::structures::paging::page_table::{PageTable, PageTableFlags as EF},
-};
+use x86_64::structures::paging::page_table::{PageTable, PageTableFlags as EF};
+
+#[cfg(target_arch = "x86_64")]
+
+#[cfg(not(feature = "grub"))]
+use rboot::{BootInfo, MemoryType};
+
+#[cfg(feature = "grub")]
+use bootloader::bootinfo::{BootInfo, MemoryRegionType};
 
 #[cfg(target_arch = "riscv64")]
 use riscv::{
@@ -31,13 +36,23 @@ static PMEM_BASE: usize = PHYSICAL_MEMORY_OFFSET;
 
 #[cfg(target_arch = "x86_64")]
 pub fn init_frame_allocator(boot_info: &BootInfo) {
+    info!("Frame allocator init start");
     let mut ba = FRAME_ALLOCATOR.lock();
     for region in boot_info.memory_map.iter() {
+
+        #[cfg(not(feature = "grub"))]
         if region.ty == MemoryType::CONVENTIONAL {
             let start_frame = region.phys_start as usize / PAGE_SIZE;
             let end_frame = start_frame + region.page_count as usize;
             ba.insert(start_frame..end_frame);
         }
+
+        #[cfg(feature = "grub")]
+        if region.region_type == MemoryRegionType::Usable {
+            info!("Frame insert rang: {:#x} ~ {:#x}", region.range.start_frame_number, region.range.end_frame_number);
+            ba.insert(region.range.start_frame_number as usize..region.range.end_frame_number as usize);
+        }
+
     }
     info!("Frame allocator init end");
 }
@@ -68,6 +83,7 @@ pub fn init_frame_allocator(boot_info: &BootInfo) {
 }
 
 pub fn init_heap() {
+    info!("heap init start");
     const MACHINE_ALIGN: usize = core::mem::size_of::<usize>();
     const HEAP_BLOCK: usize = KERNEL_HEAP_SIZE / MACHINE_ALIGN;
     static mut HEAP: [usize; HEAP_BLOCK] = [0; HEAP_BLOCK];
@@ -119,6 +135,7 @@ pub extern "C" fn frame_dealloc(target: &usize) {
 pub extern "C" fn hal_pt_map_kernel(pt: &mut PageTable, current: &PageTable) {
     //复制旧的Kernel起始虚拟地址和物理内存起始虚拟地址的, Level3及以下级的页表,
     //分别可覆盖500G虚拟空间
+    //注：KERNEL_PM4要把bootloader映射的Kernel Stack内存空间覆盖到, 否则切换页表后会无法内核栈
     let ekernel = current[KERNEL_PM4].clone();
     let ephysical = current[PHYSICAL_MEMORY_PM4].clone();
     pt[KERNEL_PM4].set_addr(ekernel.addr(), ekernel.flags() | EF::GLOBAL);

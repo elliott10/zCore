@@ -99,7 +99,7 @@ fn ioapic_controller(i: &acpi::interrupt::IoApic) -> IoApic {
 
 #[no_mangle]
 pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
-    trace!("Interrupt: {:#x} @ CPU{}", tf.trap_num, 0); // TODO 0 should replace in multi-core case
+    trace!("Interrupt: {} @ CPU{}", tf.trap_num, 0); // TODO 0 should replace in multi-core case
     match tf.trap_num as u8 {
         Breakpoint => breakpoint(),
         DoubleFault => double_fault(tf),

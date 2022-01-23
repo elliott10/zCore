@@ -21,6 +21,7 @@ use {
         structures::paging::{PageTableFlags as PTF, *},
     },
 };
+use crate::drivers::bus::pci;
 
 pub mod interrupt;
 mod acpi_table;
@@ -49,7 +50,7 @@ impl PageTableImpl {
         let root = unsafe { &mut *(root_vaddr as *mut PageTable) };
         root.zero();
         map_kernel(root_vaddr as _, frame_to_page_table(Cr3::read().0) as _);
-        trace!("create page table @ {:#x}", root_frame.paddr);
+        debug!("create page table @ {:#x}", root_frame.paddr);
         PageTableImpl {
             root_paddr: root_frame.paddr,
         }
@@ -79,7 +80,7 @@ impl PageTableTrait for PageTableImpl {
             .unwrap()
             .flush();
         };
-        debug!(
+        trace!(
             "map: {:x?} -> {:x?}, flags={:?} in {:#x?}",
             vaddr, paddr, flags, self.root_paddr
         );
@@ -169,6 +170,7 @@ pub unsafe fn set_page_table(vmtoken: usize) {
     if Cr3::read().0 == frame {
         return;
     }
+    debug!("set_page_table(), vmtoken: {:#x}, cr3: {:#x?}", vmtoken, Cr3::read().0);
     Cr3::write(frame, Cr3Flags::empty());
     debug!("set page_table @ {:#x}", vmtoken);
 }
@@ -390,6 +392,7 @@ fn vdso_constants() -> VdsoConstants {
 
 /// Initialize the HAL.
 pub fn init(config: Config) {
+    info!("Init HAL");
     timer_init();
     interrupt::init();
     COM1.lock().init();
@@ -400,6 +403,8 @@ pub fn init(config: Config) {
         CONFIG = config;
         // get tsc frequency
         TSC_FREQUENCY = tsc_frequency();
+
+        pci::init();
 
         // start multi-processors
         fn ap_main() {
@@ -420,6 +425,7 @@ pub fn init(config: Config) {
                 stack
             }
         }
+        //多核启动
         x86_smpboot::start_application_processors(ap_main, stack_fn, phys_to_virt);
     }
 }
@@ -439,7 +445,10 @@ pub fn fetch_fault_vaddr() -> VirtAddr {
 /// Get physical address of `acpi_rsdp` and `smbios` on x86_64.
 #[export_name = "hal_pc_firmware_tables"]
 pub fn pc_firmware_tables() -> (u64, u64) {
-    unsafe { (CONFIG.acpi_rsdp, CONFIG.smbios) }
+    unsafe {
+        warn!("acpi_rsd: {}, smbios: {}", CONFIG.acpi_rsdp, CONFIG.smbios);
+        (CONFIG.acpi_rsdp, CONFIG.smbios)
+    }
 }
 
 static mut CONFIG: Config = Config {
