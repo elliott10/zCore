@@ -17,3 +17,10 @@ exclude = [
 
 [profile.release]
 lto = true
+
+[patch.'https://github.com/rcore-os/rcore-fs']
+rcore-fs = { path = "../../ZCORE/rcore-fs/rcore-fs" }
+rcore-fs-sfs = { path = "../../ZCORE/rcore-fs/rcore-fs-sfs" }
+rcore-fs-ramfs = { path = "../../ZCORE/rcore-fs/rcore-fs-ramfs" }
+rcore-fs-mountfs = { path = "../../ZCORE/rcore-fs/rcore-fs-mountfs" }
+rcore-fs-devfs = { path = "../../ZCORE/rcore-fs/rcore-fs-devfs" }

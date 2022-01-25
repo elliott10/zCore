@@ -27,6 +27,7 @@ pub mod net;
 pub mod prelude;
 pub mod scheme;
 pub mod uart;
+pub mod sdmmc;
 pub mod utils;
 
 #[derive(Debug)]

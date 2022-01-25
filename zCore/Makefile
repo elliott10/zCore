@@ -1,10 +1,10 @@
 ################ Arguments ################
 
-ARCH ?= x86_64
-PLATFORM ?= qemu
-MODE ?= debug
-LOG ?= warn
-LINUX ?=
+ARCH ?= riscv64
+PLATFORM ?= d1
+MODE ?= release
+LOG ?= debug
+LINUX ?= 1
 LIBOS ?=
 GRAPHIC ?=
 HYPERVISOR ?=

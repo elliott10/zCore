@@ -32,10 +32,10 @@ rootfs: prebuilt/linux/$(ROOTFS_TAR)
 	cp prebuilt/linux/libc-libos.so rootfs/lib/ld-musl-x86_64.so.1
 	@for VAR in $(BASENAMES); do gcc $(TEST_DIR)$$VAR.c -o $(DEST_DIR)$$VAR $(CFLAG); done
 
-riscv-rootfs:prebuilt/linux/riscv64/$(RISCV64_ROOTFS_TAR)
-	@rm -rf riscv_rootfs && mkdir -p riscv_rootfs
-	@tar -xvf $< -C riscv_rootfs --strip-components 1
-	@ln -s busybox riscv_rootfs/bin/ls
+riscv-rootfs:# prebuilt/linux/riscv64/$(RISCV64_ROOTFS_TAR)
+#	@rm -rf riscv_rootfs && mkdir -p riscv_rootfs
+#	@tar -xvf $< -C riscv_rootfs --strip-components 1
+#	@ln -s busybox riscv_rootfs/bin/ls
 
 libc-test:
 	cd rootfs && git clone git://repo.or.cz/libc-test --depth 1

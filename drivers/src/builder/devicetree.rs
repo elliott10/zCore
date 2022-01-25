@@ -89,9 +89,10 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
             match comp {
                 #[cfg(feature = "virtio")]
                 c if c.contains("virtio,mmio") => self.parse_virtio(node, props),
-                c if c.contains("allwinner,sunxi-gmac") => self.parse_ethernet(node, comp, props),
+                // c if c.contains("allwinner,sunxi-gmac") => self.parse_ethernet(node, comp, props),
                 c if c.contains("ns16550a") => self.parse_uart(node, comp, props),
                 c if c.contains("allwinner,sun20i-uart") => self.parse_uart(node, comp, props),
+                c if c.contains("allwinner,sunxi-mmc-v5p3x") => self.parse_sdmmc(node, comp, props),
                 _ => Err(DeviceError::NotSupported),
             }
         };
@@ -237,6 +238,39 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
             }
             c if c.contains("allwinner,sun20i-uart") => {
                 Arc::new(unsafe { Uart16550Mmio::<u32>::new(base_vaddr?) })
+            }
+            _ => return Err(DeviceError::NotSupported),
+        });
+
+        Ok(DevWithInterrupt {
+            phandle: None,
+            interrupt_cells: None,
+            interrupts_extended,
+            dev,
+        })
+    }
+
+    /// Parse nodes for sdmmc devices
+    fn parse_sdmmc(
+        &self,
+        node: &Node,
+        comp: &StringList,
+        props: &InheritProps,
+    ) -> DeviceResult<DevWithInterrupt> {
+        let interrupts_extended = parse_interrupts(node, props)?;
+        let base_vaddr = parse_reg(node, props).and_then(|(paddr, size)| {
+            self.io_mapper
+                .query_or_map(paddr as usize, size as usize)
+                .ok_or(DeviceError::NoResources)
+        });
+        info!("detect a sdmmc device: {:?}", base_vaddr);
+
+        use crate::sdmmc::*;
+        let dev = Device::Block(match comp {
+            c if c.contains("allwinner,sunxi-mmc-v5p3x") => {
+                Arc::new(SdMmcBlk::new(|paddr, size| {
+                    self.io_mapper.query_or_map(paddr, size)
+                }).unwrap())
             }
             _ => return Err(DeviceError::NotSupported),
         });
