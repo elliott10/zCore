@@ -18,6 +18,16 @@ hal_fn_impl! {
             all_irq().first_unwrap().is_valid_irq(gsi)
         }
 
+        fn intr_enable() {
+            use x86_64::instructions::interrupts;
+            interrupts::enable_and_hlt();
+        }
+
+        fn intr_disable() {
+            use x86_64::instructions::interrupts;
+            interrupts::disable();
+        }
+
         fn mask_irq(gsi: usize) -> HalResult {
             Ok(all_irq().first_unwrap().mask(gsi)?)
         }

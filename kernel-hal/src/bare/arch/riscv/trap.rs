@@ -26,6 +26,7 @@ pub(super) fn super_soft() {
 #[no_mangle]
 pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     let scause = scause::read();
+    error!("interrupt happended");
     match TrapReason::from(scause) {
         TrapReason::SoftwareBreakpoint => breakpoint(&mut tf.sepc),
         TrapReason::PageFault(vaddr, flags) => crate::KHANDLER.handle_page_fault(vaddr, flags),

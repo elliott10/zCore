@@ -88,6 +88,12 @@ hal_fn_def! {
             core::hint::spin_loop();
         }
 
+        /// Enable all IRQs.
+        pub fn intr_enable();
+
+        /// Disable all IRQs. 
+        pub fn intr_disable();
+
         /// Is a valid IRQ number.
         pub fn is_valid_irq(vector: usize) -> bool;
 

@@ -13,6 +13,18 @@ hal_fn_impl! {
             }
         }
 
+        fn intr_enable() {
+            unsafe {
+                sstatus::set_sie();
+            }
+        }
+
+        fn intr_disable() {
+            unsafe {
+                sstatus::clear_sie();
+            }
+        }
+
         fn handle_irq(cause: usize) {
             trace!("Handle irq cause: {}", cause);
             crate::drivers::all_irq().first_unwrap().handle_irq(cause)
