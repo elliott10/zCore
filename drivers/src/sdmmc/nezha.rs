@@ -15,8 +15,7 @@ pub struct SdMmcBlk {
 }
 
 impl SdMmcBlk {
-    pub fn new<F: Fn(usize, usize) -> Option<usize>>(mapper: F) 
-    -> DeviceResult<Self> {
+    pub fn new<F: Fn(usize, usize) -> Option<usize>>(mapper: F) -> DeviceResult<Self> {
         Ok(Self {
             init: AtomicBool::new(false),
             inner: nezha_sdc::primary_init(mapper),
@@ -40,8 +39,8 @@ impl Scheme for SdMmcBlk {
     }
 
     fn handle_irq(&self, _irq_num: usize) {
-        // info!("drivers: handle irq");
-        // self.inner.handle_irq();
+        info!("drivers: handle irq");
+        self.inner.handle_irq();
     }
 }
 
