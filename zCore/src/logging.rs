@@ -5,7 +5,7 @@ use log::{self, Level, LevelFilter, Log, Metadata, Record};
 pub fn init() {
     static LOGGER: SimpleLogger = SimpleLogger;
     log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(LevelFilter::Info);
+    log::set_max_level(LevelFilter::Debug);
 }
 
 /// Reset max log level.

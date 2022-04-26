@@ -58,6 +58,7 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
         });
 
         for dev in &dev_list {
+	    info!("Device list: {:?}, Int: {:?}", dev.dev, dev.interrupts_extended);
             register_interrupt(dev, &dev_list, &intc_map).ok();
         }
 

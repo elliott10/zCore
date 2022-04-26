@@ -82,7 +82,7 @@ ifeq ($(LIBOS), 1)
 else
   ifeq ($(ARCH), riscv64)
     ifeq ($(PLATFORM), d1)
-      features += board-d1 link-user-img
+      features += board-d1
     else
       features += board-qemu
     endif
@@ -254,7 +254,7 @@ ifeq ($(PLATFORM), d1)
 run_d1: build
 	$(OBJCOPY) ../prebuilt/firmware/d1/fw_payload.elf --strip-all -O binary ./zcore_d1.bin
 	dd if=$(kernel_img) of=zcore_d1.bin bs=512 seek=2048
-	xfel ddr ddr3
+	xfel ddr d1
 	xfel write 0x40000000 zcore_d1.bin
 	xfel exec 0x40000000
 endif
