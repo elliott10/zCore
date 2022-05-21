@@ -50,6 +50,7 @@ pub trait NetDriver: Driver + AsAny {
 }
 
 // little hack, see https://users.rust-lang.org/t/how-to-downcast-from-a-trait-any-to-a-struct/11219/3
+// OR use crate: downcast-rs
 pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }

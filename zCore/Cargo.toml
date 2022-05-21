@@ -44,7 +44,7 @@ fatfs = { git = "https://github.com/rafalh/rust-fatfs.git", rev = "26fa79", defa
 x86_64 = "0.14"
 rlibc-opt = { git = "https://github.com/rcore-os/rlibc-opt.git", rev = "fb1d4a9" }
 rboot = { path = "../rboot", default-features = false }
-bootloader = { git = "https://github.com/elliott10/bootloader", rev = "bcf8047", features = [ "recursive_page_table", "map_physical_memory" ] }
+bootloader = { path = "/home/xly/rust/phil-opp/bootloader", features = [ "recursive_page_table", "map_physical_memory", "vga_320x200" ] }
 rvm = { git = "https://github.com/rcore-os/RVM", rev = "e91d625", optional = true }
 
 # x86_64 boot via grub

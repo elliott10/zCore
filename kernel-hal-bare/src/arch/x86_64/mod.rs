@@ -51,9 +51,17 @@ impl PageTableImpl {
         root.zero();
         map_kernel(root_vaddr as _, frame_to_page_table(Cr3::read().0) as _);
         debug!("create page table @ {:#x}", root_frame.paddr);
-        PageTableImpl {
+        let mut pt = PageTableImpl {
             root_paddr: root_frame.paddr,
+        };
+
+        // vga buffer
+        for i in 0..64 {
+            let addr = 0xa0000 + (i << 12);
+            pt.map(addr, addr, MMUFlags::READ | MMUFlags::WRITE);
         }
+
+        pt
     }
 
     fn get(&mut self) -> OffsetPageTable<'_> {
@@ -304,9 +312,14 @@ lazy_static! {
 
 /// Put a char by serial interrupt handler.
 pub fn serial_put(mut x: u8) {
-    if x == b'\r' {
-        x = b'\n';
+    /*
+    if (x == b'\r') || (x == b'\n') {
+        STDIN.lock().push_back(b'\n');
+        STDIN.lock().push_back(b'\r');
+    }else{
+        STDIN.lock().push_back(x);
     }
+    */
     STDIN.lock().push_back(x);
     STDIN_CALLBACK.lock().retain(|f| !f());
 }
@@ -395,7 +408,7 @@ pub fn init(config: Config) {
     info!("Init HAL");
     timer_init();
     interrupt::init();
-    COM1.lock().init();
+    COM1.lock().init(); //波特率: 38400
     unsafe {
         // enable global page
         Cr4::update(|f| f.insert(Cr4Flags::PAGE_GLOBAL));

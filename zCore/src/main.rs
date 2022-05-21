@@ -76,6 +76,8 @@ pub extern "C" fn _start(boot_info: &BootInfo) -> ! {
         kernel_hal_bare::init(
             kernel_hal_bare::Config{ acpi_rsdp: 0, smbios: 0, ap_fn: run, }
             );
+
+        //kernel_hal_bare::init_framebuffer(320, 200, 0xa0000, 0x10000);
         main(&mut [], cmdline);
     }
 
@@ -227,7 +229,7 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
     use linux_object::net::test::net_start_thread;
     //net_start_thread();
 
-    linux_object::net::net_ping_thread();
+    //linux_object::net::net_ping_thread();
     }
 
     info!("linux_loader run linux proc +++");

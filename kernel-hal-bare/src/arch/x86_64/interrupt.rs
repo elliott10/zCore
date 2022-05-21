@@ -46,8 +46,10 @@ fn mouse() {
 }
 
 pub fn init() {
+    // 鼠标
     MOUSE.lock().init().unwrap();
     MOUSE.lock().set_on_complete(mouse_on_complete);
+
     unsafe {
         init_ioapic();
     }
@@ -358,6 +360,7 @@ fn page_fault(tf: &mut TrapFrame) {
 }
 
 fn timer() {
+    trace!("IRQ Timer");
     super::timer_tick();
 }
 

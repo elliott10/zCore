@@ -57,9 +57,16 @@ impl Log for SimpleLogger {
             return;
         }
 
+        #[cfg(target_arch = "x86_64")]
+        {
+            use bootloader::printer::Printer; //VGA console
+            use core::fmt::Write;
+            write!(Printer, "{}\n", record.args()).unwrap();
+        }
+
         print_in_color(
             format_args!(
-                "[{:<15?} {:>5}] {}\n",
+                "[{:?} {:>5}] {}\n",
                 kernel_hal_bare::timer_now(),
                 record.level(),
                 record.args()

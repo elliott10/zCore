@@ -39,6 +39,7 @@ SECTIONS
     .bss : {
         sbss = .;
         *(.bss .bss.* .sbss)
+        LONG(0) /* ? bss section to be written to file */
         . = ALIGN(4K);
         ebss = .;
     }
