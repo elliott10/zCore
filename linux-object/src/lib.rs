@@ -16,7 +16,6 @@ pub mod error;
 
 // layer 1
 pub mod fs;
-#[cfg(target_arch = "riscv64")]
 pub mod net;
 
 // layer 2

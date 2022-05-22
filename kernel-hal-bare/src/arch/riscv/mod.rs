@@ -93,7 +93,18 @@ pub fn remap_the_kernel(dtb: usize) {
     map_range(
         &mut pt,
         phys_to_virt(PCI_BASE) as usize,
-        phys_to_virt(PCI_BASE) as usize + PAGE_SIZE * 16,
+        phys_to_virt(PCI_BASE) as usize + PAGE_SIZE * 256 * 32 * 8 - 1,
+        linear_offset,
+        PTF::VALID | PTF::READABLE | PTF::WRITABLE,
+    )
+    .unwrap();
+
+    // PCI E1000
+    #[cfg(feature = "board_qemu")]
+    map_range(
+        &mut pt,
+        phys_to_virt(E1000_BASE) as usize,
+        phys_to_virt(E1000_BASE) as usize + PAGE_SIZE * 32,
         linear_offset,
         PTF::VALID | PTF::READABLE | PTF::WRITABLE,
     )
@@ -595,7 +606,7 @@ pub fn init(config: Config) {
     {
         // "pci-host-ecam-generic"
         // 没有成功扫描出PCI设备
-        // pci::init();
+        pci::init();
 
         bare_println!("Setup virtio @devicetree {:#x}", config.dtb);
 

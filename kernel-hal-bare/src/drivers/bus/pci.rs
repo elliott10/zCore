@@ -8,6 +8,7 @@ use alloc::sync::Arc;
 use pci::*;
 
 const PCI_COMMAND: u16 = 0x04;
+const BAR0: u16 = 0x10;
 const PCI_CAP_PTR: u16 = 0x34;
 const PCI_INTERRUPT_LINE: u16 = 0x3c;
 const PCI_INTERRUPT_PIN: u16 = 0x3d;
@@ -33,8 +34,8 @@ impl PortOps for PortOpsImpl {
     unsafe fn read16(&self, port: u16) -> u16 {
         Port::new(port).read()
     }
-    unsafe fn read32(&self, port: u16) -> u32 {
-        Port::new(port).read()
+    unsafe fn read32(&self, port: u32) -> u32 {
+        Port::new(port as u16).read()
     }
     unsafe fn write8(&self, port: u16, val: u8) {
         Port::new(port).write(val);
@@ -42,8 +43,8 @@ impl PortOps for PortOpsImpl {
     unsafe fn write16(&self, port: u16, val: u16) {
         Port::new(port).write(val);
     }
-    unsafe fn write32(&self, port: u16, val: u32) {
-        Port::new(port).write(val);
+    unsafe fn write32(&self, port: u32, val: u32) {
+        Port::new(port as u16).write(val);
     }
 }
 
@@ -57,6 +58,11 @@ const PCI_BASE: usize = 0xbbe00000;
 const PCI_BASE: usize = 0x30000000;
 // riscv64 Qemu
 
+#[cfg(target_arch = "x86_64")]
+const PCI_ACCESS: CSpaceAccessMethod = CSpaceAccessMethod::IO;
+#[cfg(not(target_arch = "x86_64"))]
+const PCI_ACCESS: CSpaceAccessMethod = CSpaceAccessMethod::MemoryMapped(PCI_BASE as *mut u8);
+
 #[cfg(any(target_arch = "mips", target_arch = "riscv64"))]
 impl PortOps for PortOpsImpl {
     unsafe fn read8(&self, port: u16) -> u8 {
@@ -65,7 +71,7 @@ impl PortOps for PortOpsImpl {
     unsafe fn read16(&self, port: u16) -> u16 {
         read(phys_to_virt(PCI_BASE) + port as usize)
     }
-    unsafe fn read32(&self, port: u16) -> u32 {
+    unsafe fn read32(&self, port: u32) -> u32 {
         read(phys_to_virt(PCI_BASE) + port as usize)
     }
     unsafe fn write8(&self, port: u16, val: u8) {
@@ -74,16 +80,24 @@ impl PortOps for PortOpsImpl {
     unsafe fn write16(&self, port: u16, val: u16) {
         write(phys_to_virt(PCI_BASE) + port as usize, val);
     }
-    unsafe fn write32(&self, port: u16, val: u32) {
+    unsafe fn write32(&self, port: u32, val: u32) {
         write(phys_to_virt(PCI_BASE) + port as usize, val);
     }
 }
 
 /// Enable the pci device and its interrupt
 /// Return assigned MSI interrupt number when applicable
-unsafe fn enable(loc: Location) -> Option<usize> {
+unsafe fn enable(loc: Location, paddr: u64) -> Option<usize> {
     let ops = &PortOpsImpl;
-    let am = CSpaceAccessMethod::IO;
+    //let am = CSpaceAccessMethod::IO;
+    let am = PCI_ACCESS;
+
+    if paddr != 0 {
+        // reveal PCI regs by setting paddr
+        let bar0_raw = am.read32(ops, loc, BAR0);
+        am.write32(ops, loc, BAR0, (paddr & !0xfff) as u32); //Only for 32-bit decoding
+        debug!("BAR0 set from {:#x} to {:#x}", bar0_raw, am.read32(ops, loc, BAR0));
+    }
 
     // 23 and lower are used
     static mut MSI_IRQ: u32 = 23;
@@ -150,9 +164,17 @@ pub fn init_driver(dev: &PCIDevice) {
             // 82545EM Gigabit Ethernet Controller (Copper)
             // 0x10d3
             // 82574L Gigabit Network Connection
+            // (e1000e 8086:10d3)
             if let Some(BAR::Memory(addr, len, _, _)) = dev.bars[0] {
-                let irq = unsafe { enable(dev.loc) };
-                let vaddr = phys_to_virt(addr as usize);
+                info!("Found e1000e dev {:?} BAR0 {:#x?}", dev, addr);
+                let paddr =
+                    if addr == 0 {
+                        0x40000000
+                    }else{
+                        addr
+                    };
+                let irq = unsafe { enable(dev.loc, paddr) };
+                let vaddr = phys_to_virt(paddr as usize);
                 let index = NET_DRIVERS.read().len();
                 e1000::init(name, irq, vaddr, len as usize, index);
                 return;
@@ -161,7 +183,7 @@ pub fn init_driver(dev: &PCIDevice) {
         (0x8086, 0x10fb) => {
             // 82599ES 10-Gigabit SFI/SFP+ Network Connection
             if let Some(BAR::Memory(addr, len, _, _)) = dev.bars[0] {
-                let irq = unsafe { enable(dev.loc) };
+                let irq = unsafe { enable(dev.loc, 0) };
                 let vaddr = phys_to_virt(addr as usize);
                 let index = NET_DRIVERS.read().len();
                 PCI_DRIVERS.lock().insert(
@@ -214,7 +236,8 @@ pub fn detach_driver(loc: &Location) -> bool {
 }
 
 pub fn init() {
-    let pci_iter = unsafe { scan_bus(&PortOpsImpl, CSpaceAccessMethod::IO) };
+    //let pci_iter = unsafe { scan_bus(&PortOpsImpl, CSpaceAccessMethod::IO) };
+    let pci_iter = unsafe { scan_bus(&PortOpsImpl, PCI_ACCESS) };
     info!("");
     info!("--------- PCI bus:device:function ---------");
     for dev in pci_iter {
@@ -232,11 +255,12 @@ pub fn init() {
         );
         init_driver(&dev);
     }
+    info!("---------");
     info!("");
 }
 
 pub fn find_device(vendor: u16, product: u16) -> Option<Location> {
-    let pci_iter = unsafe { scan_bus(&PortOpsImpl, CSpaceAccessMethod::IO) };
+    let pci_iter = unsafe { scan_bus(&PortOpsImpl, PCI_ACCESS) };
     for dev in pci_iter {
         if dev.id.vendor_id == vendor && dev.id.device_id == product {
             return Some(dev.loc);
@@ -246,7 +270,7 @@ pub fn find_device(vendor: u16, product: u16) -> Option<Location> {
 }
 
 pub fn get_bar0_mem(loc: Location) -> Option<(usize, usize)> {
-    unsafe { probe_function(&PortOpsImpl, loc, CSpaceAccessMethod::IO) }
+    unsafe { probe_function(&PortOpsImpl, loc, PCI_ACCESS) }
         .and_then(|dev| dev.bars[0])
         .map(|bar| match bar {
             BAR::Memory(addr, len, _, _) => (addr as usize, len as usize),

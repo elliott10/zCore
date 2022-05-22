@@ -229,8 +229,8 @@ fn main(ramfs_data: &'static mut [u8], cmdline: &str) -> ! {
     use linux_object::net::test::net_start_thread;
     //net_start_thread();
 
-    //linux_object::net::net_ping_thread();
     }
+    linux_object::net::net_ping_thread();
 
     info!("linux_loader run linux proc +++");
     /* 用户程序无法访问内核的代码？？？ 页表：USER

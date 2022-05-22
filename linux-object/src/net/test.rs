@@ -25,8 +25,9 @@ async fn server(_arg: usize) {
         }
     }
 
+    use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
+    //use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
     //use kernel_hal_bare::drivers::net::virtio_net::VirtIONetDriver as DriverInterface;
-    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
 
     // Ref: https://github.com/elliott10/rCore/blob/6f1953b9773d66cf7ab831c345a44e89036751c1/kernel/src/net/test.rs
     let driver = {

@@ -24,10 +24,10 @@ uart_16550 = "=0.2.15"
 rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "6df6cd2" }
 device_tree = { git = "https://github.com/rcore-os/device_tree-rs" }
 virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers", rev = "568276" }
-isomorphic_drivers = { git = "https://github.com/rcore-os/isomorphic_drivers", rev = "fcf694d2", features = ["log"] }
+isomorphic_drivers = { git = "https://github.com/rcore-os/isomorphic_drivers", rev = "f7cd97", features = ["log"] }
 #isomorphic_drivers = { path = "/home/xly/rust/arch-lib/isomorphic_drivers", features = ["log"] }
 smoltcp = { git = "https://github.com/smoltcp-rs/smoltcp", rev = "35e833e3", default-features = false, features = ["log", "alloc", "verbose", "proto-ipv4", "proto-ipv6", "proto-igmp", "medium-ip", "medium-ethernet", "socket-raw", "socket-udp", "socket-tcp", "socket-icmp"] }
-pci = { git = "https://github.com/rcore-os/pci-rs", rev = "a4e7cea6" }
+pci = { git = "https://github.com/elliott10/pci-rs", rev = "8f33774b" }
 
 object = { version = "0.23.0", default-features = false, features = ["read_core", "elf"]}
 addr2line = { version = "0.14.1", default-features = false, features = ["rustc-demangle"]}

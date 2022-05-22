@@ -26,11 +26,12 @@ use kernel_hal::drivers::{Driver, DeviceType, NetDriver, DRIVERS, NET_DRIVERS, S
 #[derive(Clone)]
 pub struct E1000Driver(Arc<Mutex<E1000<Provider>>>);
 
+#[derive(Clone)]
 pub struct E1000Interface {
-    iface: Mutex<Interface<'static, E1000Driver>>,
-    driver: E1000Driver,
-    name: String,
-    irq: Option<usize>,
+    pub iface: Arc<Mutex<Interface<'static, E1000Driver>>>,
+    pub driver: E1000Driver,
+    pub name: String,
+    pub irq: Option<usize>,
 }
 
 impl Driver for E1000Interface {
@@ -212,9 +213,10 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
         .ip_addrs(ip_addrs)
         .finalize();
 
-    info!("e1000 interface {} up with addr 10.0.{}.2/24", name, index);
+    //info!("e1000 interface {} up with addr 10.0.{}.2/24", name, index);
+    info!("e1000 interface {} up with addr 10.0.2.15/24", name);
     let e1000_iface = E1000Interface {
-        iface: Mutex::new(iface),
+        iface: Arc::new(Mutex::new(iface)),
         driver: net_driver.clone(),
         name,
         irq,

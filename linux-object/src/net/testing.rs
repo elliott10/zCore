@@ -63,23 +63,25 @@ macro_rules! get_icmp_pong {
 
 async fn ping_main() {
 
-    if NET_DRIVERS.read().len() < 1 {
+    let net_devs = NET_DRIVERS.read().len();
+    if net_devs < 1 {
         loop {
             #[cfg(target_arch = "riscv64")]
             kernel_hal_bare::interrupt::wait_for_interrupt();
 
-            trace!("NO NET DRIVERS !");
+            warn!("NO NET DRIVERS !");
             yield_now().await;
         }
     }
 
-    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
+    //use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
+    use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
 
     let interface = (NET_DRIVERS.write()[0]).as_any().downcast_ref::<DriverInterface>().unwrap().clone();
 
     let ifname = interface.get_ifname();
     let ethernet_addr = interface.get_mac();
-    debug!("NET_DRIVERS read OK!\n{} MAC: {:x?}", ifname, ethernet_addr);
+    debug!("NET_DRIVERS 1/{} read OK!\n{} MAC: {:x?}", net_devs, ifname, ethernet_addr);
 
     let mut iface = interface.iface.lock();
     /*
@@ -92,7 +94,9 @@ async fn ping_main() {
 
     debug!("IP address: {}, Default gateway: {:?}", iface.ipv4_address().unwrap(), iface.routes());
 
-    let address = IpAddress::from_str("192.168.0.62").expect("invalid address format");
+    //let taddr = "192.168.0.62";
+    let taddr = "10.0.2.2";
+    let address = IpAddress::from_str(taddr).expect("invalid address format");
     let count = 3000;
     let interval = Duration::from_secs(1);
     let timeout = Duration::from_secs(5);
