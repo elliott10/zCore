@@ -81,7 +81,7 @@ pub fn remap_the_kernel(dtb: usize) {
     map_range(
         &mut pt,
         end as usize,
-        end as usize + PAGE_SIZE * 5120,
+        end as usize + PAGE_SIZE * 4096,
         linear_offset,
         PTF::VALID | PTF::READABLE | PTF::WRITABLE,
     )

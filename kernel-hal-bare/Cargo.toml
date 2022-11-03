@@ -43,9 +43,7 @@ acpi = "1.1"
 ps2-mouse = { git = "https://github.com/YXL76/ps2-mouse", branch = "feat" }
 
 [target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
-riscv = { git = "https://github.com/rcore-os/riscv", features = [
-    "inline-asm",
-], rev = "0074cbc" }
+riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"], rev = "0074cbc" }
 # 注意rev版本号必须与其他组件的完全一致，不可多字符
 
 bitflags = "1.0"

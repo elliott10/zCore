@@ -74,8 +74,8 @@ async fn ping_main() {
         }
     }
 
-    //use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
-    use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
+    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
+    //use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
 
     let interface = (NET_DRIVERS.write()[0]).as_any().downcast_ref::<DriverInterface>().unwrap().clone();
 
@@ -94,8 +94,8 @@ async fn ping_main() {
 
     debug!("IP address: {}, Default gateway: {:?}", iface.ipv4_address().unwrap(), iface.routes());
 
-    //let taddr = "192.168.0.62";
-    let taddr = "10.0.2.2";
+    let taddr = "192.168.0.62";
+    //let taddr = "10.0.2.2";
     let address = IpAddress::from_str(taddr).expect("invalid address format");
     let count = 3000;
     let interval = Duration::from_secs(1);

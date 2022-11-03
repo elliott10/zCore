@@ -80,6 +80,15 @@ pub fn init_dt(dt: &Node) {
         base,
         manager: Mutex::new(IrqManager::new(false)),
     });
+
+    // Clear PLIC S mode en regs: 1 ~ 1023
+    let mut enaddr = 0x2080;
+    while enaddr <= 0x20fc {
+        write(base + enaddr, 0 as u32);
+        enaddr += 4; // u32
+    }
+    info!("Clear plic enable regs untill {:#x}", enaddr-4);
+
     // set prio threshold to 0 for context 1
     write(base + 0x201000, 0);
 

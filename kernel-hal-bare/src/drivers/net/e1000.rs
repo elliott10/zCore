@@ -23,6 +23,7 @@ use spin::Mutex;
 use super::super::IRQ_MANAGER;
 use kernel_hal::drivers::{Driver, DeviceType, NetDriver, DRIVERS, NET_DRIVERS, SOCKETS};
 
+// why clone ? borrowed value does not live long enough
 #[derive(Clone)]
 pub struct E1000Driver(Arc<Mutex<E1000<Provider>>>);
 
@@ -206,15 +207,22 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
     let ethernet_addr = EthernetAddress::from_bytes(&mac);
     //let ip_addrs = [IpCidr::new(IpAddress::v4(10, 0, index as u8, 2), 24)];
     let ip_addrs = [IpCidr::new(IpAddress::v4(10, 0, 2, 15), 24)];
+
+    let default_gateway = Ipv4Address::new(10, 0, 2, 2);
+    static mut ROUTES_STORAGE: [Option<(IpCidr, Route)>; 1] = [None; 1];
+    let mut routes = unsafe {Routes::new(&mut ROUTES_STORAGE[..])};
+    routes.add_default_ipv4_route(default_gateway).unwrap();
+
     let neighbor_cache = NeighborCache::new(BTreeMap::new());
     let iface = InterfaceBuilder::new(net_driver.clone())
         .ethernet_addr(ethernet_addr)
         .neighbor_cache(neighbor_cache)
         .ip_addrs(ip_addrs)
+        .routes(routes)
         .finalize();
 
     //info!("e1000 interface {} up with addr 10.0.{}.2/24", name, index);
-    info!("e1000 interface {} up with addr 10.0.2.15/24", name);
+    info!("e1000 interface {} up with route 10.0.2.2, addr 10.0.2.15/24", name);
     let e1000_iface = E1000Interface {
         iface: Arc::new(Mutex::new(iface)),
         driver: net_driver.clone(),

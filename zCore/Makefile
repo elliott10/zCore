@@ -1,10 +1,11 @@
-arch ?= x86_64
+arch ?= riscv64
 board ?= qemu
 mode ?= debug
 zbi_file ?= bringup
 graphic ?=
 accel ?=
-linux ?=
+linux ?= 1
+net ?=
 user ?=
 hypervisor ?=
 smp ?= 1
@@ -19,7 +20,7 @@ kernel_bin := $(build_path)/zcore.bin
 kernel_grub := $(build_path)/bootimage-zcore.bin
 ESP := $(build_path)/esp
 OVMF := ../rboot/OVMF.fd
-qemu := qemu-system-$(arch)
+qemu := /usr/bin/qemu-system-$(arch)
 OBJDUMP := rust-objdump -print-imm-hex -x86-asm-syntax=intel
 OBJCOPY := rust-objcopy --binary-architecture=$(arch)
 VMDISK := $(build_path)/boot.vdi
@@ -175,7 +176,7 @@ ifeq ($(board), d1)
 run-thead: build
 	@cp ../prebuilt/firmware/fw_jump-0x40020000.bin fw-zCore.bin
 	@dd if=$(kernel_bin) of=fw-zCore.bin bs=512 seek=256
-	xfel ddr ddr3
+	xfel ddr d1
 	xfel write 0x40000000 fw-zCore.bin
 	xfel exec 0x40000000
 
@@ -204,7 +205,7 @@ endif
 
 kernel:
 	echo Building zCore kenel
-	cargo build -vv $(build_args)
+	cargo build $(build_args)
 ifeq ($(grub), 1)
 	cargo bootimage $(build_args)
 endif
