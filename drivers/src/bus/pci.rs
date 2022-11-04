@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+#![allow(dead_code)]
 use super::{phys_to_virt, PAGE_SIZE};
 use crate::builder::IoMapper;
 use crate::{Device, DeviceError, DeviceResult};
@@ -7,17 +9,14 @@ use pci::*;
 const PCI_COMMAND: u16 = 0x04;
 const BAR0: u16 = 0x10;
 const PCI_CAP_PTR: u16 = 0x34;
-const _PCI_INTERRUPT_LINE: u16 = 0x3c;
-const _PCI_INTERRUPT_PIN: u16 = 0x3d;
-
+const PCI_INTERRUPT_LINE: u16 = 0x3c;
+const PCI_INTERRUPT_PIN: u16 = 0x3d;
+const PCI_COMMAND_INTX_DISABLE:u16 = 0x400;
 const PCI_MSI_CTRL_CAP: u16 = 0x00;
 const PCI_MSI_ADDR: u16 = 0x04;
-const _PCI_MSI_UPPER_ADDR: u16 = 0x08;
+const PCI_MSI_UPPER_ADDR: u16 = 0x08;
 const PCI_MSI_DATA_32: u16 = 0x08;
 const PCI_MSI_DATA_64: u16 = 0x0C;
-
-// const PCI_COMMAND_INTX_DISABLE:u16 = 0x400;
-
 const PCI_CAP_ID_MSI: u8 = 0x05;
 
 struct PortOpsImpl;
@@ -57,6 +56,7 @@ use super::{read, write};
 const PCI_BASE: usize = 0xbbe00000;
 
 #[cfg(target_arch = "riscv64")]
+//const PCI_BASE: usize = 0x30000000;
 //const PCI_BASE: usize = 0x60070000;
 const PCI_BASE: usize = 0xe00000000;
 
@@ -93,7 +93,7 @@ impl PortOps for PortOpsImpl {
 }
 */
 
-use super::pcie_dw_sifive::{pcie_dw_read_config, pcie_dw_write_config, PCI_SIZE};
+use super::pcie_dw_sifive::{pcie_dw_read_config, pcie_dw_write_config, PciSize};
 
 impl PortOps for PortOpsImpl {
     unsafe fn read8(&self, port: u16) -> u8 {
@@ -106,9 +106,9 @@ impl PortOps for PortOpsImpl {
     }
     unsafe fn read32(&self, port: u32) -> u32 {
         let mut valuep: u64 = 0;
-        let bdf = (port >> 12) << 8; //注，这里会清0低位
-        let offset = port & 0xffc;
-        pcie_dw_read_config(bdf, offset, &mut valuep, PCI_SIZE::pci32).unwrap();
+        let bdf = port;
+        let offset = port & 0xfc;
+        pcie_dw_read_config(bdf, offset, &mut valuep, PciSize::Pci32).unwrap();
 
         valuep as u32
     }
@@ -120,9 +120,9 @@ impl PortOps for PortOpsImpl {
         error!("unimplemented write16!");
     }
     unsafe fn write32(&self, port: u32, val: u32) {
-        let bdf = (port >> 12) << 8; //注，这里会清0低位
-        let offset = port & 0xffc;
-        pcie_dw_write_config(bdf, offset, val as u64, PCI_SIZE::pci32).unwrap();
+        let bdf = port;
+        let offset = port & 0xfc;
+        pcie_dw_write_config(bdf, offset, val as u64, PciSize::Pci32).unwrap();
     }
 }
 
@@ -191,7 +191,7 @@ unsafe fn enable(loc: Location, paddr: u64) -> Option<usize> {
     if !msi_found {
         // am.write16(ops, loc, PCI_COMMAND, (0x2) as u16);
         am.write16(ops, loc, PCI_COMMAND, 0x6);
-        am.write32(ops, loc, _PCI_INTERRUPT_LINE, 33);
+        am.write32(ops, loc, PCI_INTERRUPT_LINE, 33);
         debug!("MSI not found, using PCI interrupt");
     }
 
@@ -325,6 +325,7 @@ pub fn detach_driver(_loc: &Location) -> bool {
 
 pub fn init(mapper: Option<Arc<dyn IoMapper>>) -> DeviceResult<Vec<Device>> {
     let mapper_driver = if let Some(m) = mapper {
+        //m.query_or_map(PCI_BASE, PAGE_SIZE * 256 * 32 * 8);
         m.query_or_map(PCI_BASE, 256 * 256 * 32 * 8);
         m.query_or_map(0x60070000, 256 * 256 * 32 * 8);
         Some(m)

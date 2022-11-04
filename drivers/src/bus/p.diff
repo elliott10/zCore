@@ -1,0 +1,62 @@
+diff --git a/drivers/src/bus/mod.rs b/drivers/src/bus/mod.rs
+index caddcc3c8..6c3bde991 100644
+--- a/drivers/src/bus/mod.rs
++++ b/drivers/src/bus/mod.rs
+@@ -25,6 +25,7 @@ type PhysAddr = usize;
+ use core::ptr::{read_volatile, write_volatile};
+ #[inline(always)]
+ pub fn write<T>(addr: usize, content: T) {
++    trace!("Write @ {:#x}", addr);
+     let cell = (addr) as *mut T;
+     unsafe {
+         write_volatile(cell, content);
+@@ -32,6 +33,7 @@ pub fn write<T>(addr: usize, content: T) {
+ }
+ #[inline(always)]
+ pub fn read<T>(addr: usize) -> T {
++    trace!("Read @ {:#x}", addr);
+     let cell = (addr) as *const T;
+     unsafe { read_volatile(cell) }
+ }
+diff --git a/drivers/src/bus/pci.rs b/drivers/src/bus/pci.rs
+index e53f4ada1..9f0dbd0bf 100644
+--- a/drivers/src/bus/pci.rs
++++ b/drivers/src/bus/pci.rs
+@@ -54,8 +54,24 @@ use super::{read, write};
+ #[cfg(feature = "board_malta")]
+ const PCI_BASE: usize = 0xbbe00000;
+ 
++
++
++/*
+ #[cfg(target_arch = "riscv64")]
+ const PCI_BASE: usize = 0x30000000;
++*/
++
++// RISCV
++cfg_if::cfg_if! {
++    if #[cfg(feature = "board-fu740")] {
++        //const PCI_BASE: usize = 0xe00000000;
++        const PCI_BASE: usize = 0xe00600000;
++    } else if #[cfg(target_arch = "riscv64")] {
++        const PCI_BASE: usize = 0x30000000;
++    }
++}
++
++
+ #[cfg(target_arch = "riscv64")]
+ const E1000_BASE: usize = 0x40000000;
+ // riscv64 Qemu
+diff --git a/zCore/src/logging.rs b/zCore/src/logging.rs
+index d6065f222..999c6b545 100644
+--- a/zCore/src/logging.rs
++++ b/zCore/src/logging.rs
+@@ -10,7 +10,7 @@ pub fn init() {
+ 
+ /// Reset max log level.
+ pub fn set_max_level(level: &str) {
+-    log::set_max_level(level.parse().unwrap_or(LevelFilter::Warn));
++    log::set_max_level(level.parse().unwrap_or(LevelFilter::Trace));
+ }
+ 
+ #[inline]
