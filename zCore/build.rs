@@ -8,7 +8,7 @@ fn main() {
         } else if board.contains("c910light") {
             0xffffffe000200000
         } else {
-            0xffffffc080200000
+            0xffffffc080100000
         };
 
         let mut fout = std::fs::File::create("src/platform/riscv/kernel-vars.ld").unwrap();

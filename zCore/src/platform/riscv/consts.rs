@@ -17,6 +17,7 @@ pub fn phys_memory_base() -> usize {
 use spin::Once;
 
 /// 内核位置信息
+#[derive(Debug)]
 pub struct KernelMemInfo {
     /// 内核在物理地址空间的起始地址。
     pub paddr_base: usize,
@@ -45,7 +46,7 @@ impl KernelMemInfo {
             fn end();
         }
         let paddr_base = start as usize;
-        let vaddr_base = 0xffff_ffc0_8020_0000;
+        let vaddr_base = 0xffffffc0_80100000;
         Self {
             paddr_base,
             vaddr_base,
