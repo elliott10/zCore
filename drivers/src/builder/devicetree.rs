@@ -254,7 +254,9 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
         props: &InheritProps,
     ) -> DeviceResult<DevWithInterrupt> {
         let interrupts_extended = parse_interrupts(node, props)?;
+        let mut uart_paddr = 0;
         let base_vaddr = parse_reg(node, props).and_then(|(paddr, size)| {
+            uart_paddr = paddr;
             self.io_mapper
                 .query_or_map(paddr as usize, size as usize)
                 .ok_or(DeviceError::NoResources)
@@ -266,7 +268,9 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
                 Arc::new(unsafe { Uart16550Mmio::<u8>::new(base_vaddr?) })
             }
             #[cfg(feature = "board-d1")]
-            c if c.contains("allwinner,sun20i-uart") => Arc::new(UartAllwinner::new(base_vaddr?)),
+            c if c.contains("allwinner,sun20i-uart") && uart_paddr == 0x2500000 => {
+                Arc::new(unsafe { Uart16550D1::<u32>::new(base_vaddr?) })
+            }
             c if c.contains("snps,dw-apb-uart") => {
                 Arc::new(unsafe { Uart16550Mmio::<u32>::new(base_vaddr?) })
             }
