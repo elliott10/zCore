@@ -49,8 +49,12 @@ struct Uart16550Inner<T: Io> {
     modem_sts: ReadOnly<T>,
     /// scratch
     scratch: T,
-    /// Just padding
-    padding: [T; 33],
+    /// padding
+    padding1: [T; 23],
+    /// uart status, 0x7C
+    usr: T,
+    /// padding
+    padding2: [T; 9],
     /// Halt TX Register, 0xA4
     halt: T,
 }
@@ -89,9 +93,9 @@ where
         // change config when busy
         self.halt.write(0x02.into());
         }
+
         // clear rxfifo after set baud
         self.fifo_ctrl.write((0xb1 | 0x02).into());
-
         self.modem_ctrl.write(0x03.into());
 
         // Enable interrupts
@@ -134,6 +138,7 @@ where
         self.int_en.write(0x1.into());
     }
 
+    #[allow(dead_code)]
     fn line_sts(&self) -> LineStsFlags {
         LineStsFlags::from_bits_truncate(
             (self.line_sts.read() & 0xFF.into()).try_into().unwrap_or(0),
@@ -142,7 +147,7 @@ where
 
     fn try_recv(&mut self) -> DeviceResult<Option<u8>> {
         // while read(lsr) & 1 == 0 {}
-        if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
+        if (self.usr.read() & 0x08.into()).try_into().unwrap_or(0) != 0 {
             Ok(Some(
                 (self.data.read() & 0xFF.into()).try_into().unwrap_or(0) as u8
                 // T::Value impl From<u32>, 8.into() => T::Value ;   
@@ -155,7 +160,7 @@ where
 
     fn send(&mut self, ch: u8) -> DeviceResult {
         // while read(lsr) & 0x20 == 0 {}
-        while !self.line_sts().contains(LineStsFlags::OUTPUT_EMPTY) {}
+        while (self.usr.read() & 0x02.into()).try_into().unwrap_or(0) == 0 {}
         // impl trait `From<u8>` for T::Value
         self.data.write((ch as u32).into());
         Ok(())
@@ -204,7 +209,8 @@ where
         "d1-uart16550-mmio"
     }
 
-    fn handle_irq(&self, _irq_num: usize) {
+    fn handle_irq(&self, irq_num: usize) {
+        debug!("uart d1 handle_irq: {:?}", irq_num);
         self.listener.trigger(());
     }
 }
@@ -244,8 +250,8 @@ where
 {
     unsafe fn new_common(base: usize) -> Self {
         let uart: &mut Uart16550Inner<Mmio<V>> = Mmio::<V>::from_base_as(base);
-        //uart.init();
-        uart.init_uart();
+        uart.init();
+        //uart.init_uart();
         Self {
             inner: Mutex::new(uart),
             listener: EventListener::new(),

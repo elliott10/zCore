@@ -37,13 +37,16 @@ impl Scheme for BufferedUart {
     }
 
     fn handle_irq(&self, _unused: usize) {
+        let mut n = 0;
         while let Some(c) = self.inner.try_recv().unwrap_or(None) {
+            n += 1;
             let mut buf = self.buf.lock();
             if buf.len() < BUF_CAPACITY {
                 let c = if c == b'\r' { b'\n' } else { c };
                 buf.push_back(c);
             }
         }
+        debug!("handle uart char: {}, buf len: {}", n, self.buf.lock().len());
         if self.buf.lock().len() > 0 {
             self.listener.trigger(());
         }

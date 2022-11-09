@@ -268,7 +268,7 @@ impl<M: IoMapper> DevicetreeDriverBuilder<M> {
                 Arc::new(unsafe { Uart16550Mmio::<u8>::new(base_vaddr?) })
             }
             #[cfg(feature = "board-d1")]
-            c if c.contains("allwinner,sun20i-uart") && uart_paddr == 0x2500000 => {
+            c if c.contains("allwinner,sun20i-uart") /* && uart_paddr == 0x2500000 */ => {
                 Arc::new(unsafe { Uart16550D1::<u32>::new(base_vaddr?) })
             }
             c if c.contains("snps,dw-apb-uart") => {
