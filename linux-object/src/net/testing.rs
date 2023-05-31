@@ -74,8 +74,8 @@ async fn ping_main() {
         }
     }
 
-    use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
-    //use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
+    //use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
+    use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
 
     let interface = (NET_DRIVERS.write()[0]).as_any().downcast_ref::<DriverInterface>().unwrap().clone();
 

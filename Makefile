@@ -58,7 +58,7 @@ $(OUT_IMG): prebuilt/linux/$(ROOTFS_TAR) rcore-fs-fuse
 # libc-libos.so (convert syscall to function call) is from https://github.com/rcore-os/musl/tree/rcore
 	@cp prebuilt/linux/libc-libos.so rootfs/lib/ld-musl-x86_64.so.1
 
-image: $(OUT_IMG)
+image: rootfs $(OUT_IMG)
 	@echo Resizing $(ARCH).img
 	@qemu-img resize $(OUT_IMG) +5M
 
