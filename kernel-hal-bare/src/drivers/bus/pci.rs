@@ -1,11 +1,11 @@
 use crate::drivers::net::*;
-use kernel_hal::drivers::{Driver, DRIVERS, NET_DRIVERS};
 use crate::{phys_to_virt, PAGE_SIZE};
-use spin::Mutex;
-use alloc::format;
 use alloc::collections::BTreeMap;
+use alloc::format;
 use alloc::sync::Arc;
+use kernel_hal::drivers::{Driver, DRIVERS, NET_DRIVERS};
 use pci::*;
+use spin::Mutex;
 
 const PCI_COMMAND: u16 = 0x04;
 const BAR0: u16 = 0x10;
@@ -49,7 +49,7 @@ impl PortOps for PortOpsImpl {
 }
 
 #[cfg(any(target_arch = "mips", target_arch = "riscv64"))]
-use super::super::{write, read};
+use super::super::{read, write};
 
 #[cfg(feature = "board_malta")]
 const PCI_BASE: usize = 0xbbe00000;
@@ -96,7 +96,11 @@ unsafe fn enable(loc: Location, paddr: u64) -> Option<usize> {
         // reveal PCI regs by setting paddr
         let bar0_raw = am.read32(ops, loc, BAR0);
         am.write32(ops, loc, BAR0, (paddr & !0xfff) as u32); //Only for 32-bit decoding
-        debug!("BAR0 set from {:#x} to {:#x}", bar0_raw, am.read32(ops, loc, BAR0));
+        debug!(
+            "BAR0 set from {:#x} to {:#x}",
+            bar0_raw,
+            am.read32(ops, loc, BAR0)
+        );
     }
 
     // 23 and lower are used
@@ -167,12 +171,7 @@ pub fn init_driver(dev: &PCIDevice) {
             // (e1000e 8086:10d3)
             if let Some(BAR::Memory(addr, len, _, _)) = dev.bars[0] {
                 info!("Found e1000e dev {:?} BAR0 {:#x?}", dev, addr);
-                let paddr =
-                    if addr == 0 {
-                        0x40000000
-                    }else{
-                        addr
-                    };
+                let paddr = if addr == 0 { 0x40000000 } else { addr };
                 let irq = unsafe { enable(dev.loc, paddr) };
                 let vaddr = phys_to_virt(paddr as usize);
                 let index = NET_DRIVERS.read().len();

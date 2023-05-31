@@ -6,7 +6,9 @@
 //! - `hypervisor`: Enables `zircon_object::hypervisor` (`Guest` and `Vcpu`).
 
 #![no_std]
-#![deny(warnings, unsafe_code, unused_must_use, missing_docs)]
+#![deny(unused_must_use, missing_docs)]
+//#![deny(warnings)]
+//#![deny(unsafe_code)]
 #![feature(drain_filter)]
 #![feature(get_mut_unchecked)]
 

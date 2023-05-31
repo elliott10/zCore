@@ -12,16 +12,16 @@ use smoltcp::time::Instant;
 use smoltcp::wire::*;
 use smoltcp::Result;
 
+use crate::PAGE_SIZE;
 use isomorphic_drivers::net::ethernet::intel::e1000::E1000;
 use isomorphic_drivers::net::ethernet::structs::EthernetAddress as DriverEthernetAddress;
-use crate::PAGE_SIZE;
 
 use crate::drivers::{provider::Provider, BlockDriver};
 //use crate::sync::SpinNoIrqLock as Mutex;
 use spin::Mutex;
 
 use super::super::IRQ_MANAGER;
-use kernel_hal::drivers::{Driver, DeviceType, NetDriver, DRIVERS, NET_DRIVERS, SOCKETS};
+use kernel_hal::drivers::{DeviceType, Driver, NetDriver, DRIVERS, NET_DRIVERS, SOCKETS};
 
 // why clone ? borrowed value does not live long enough
 #[derive(Clone)]
@@ -210,7 +210,7 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
 
     let default_gateway = Ipv4Address::new(10, 0, 2, 2);
     static mut ROUTES_STORAGE: [Option<(IpCidr, Route)>; 1] = [None; 1];
-    let mut routes = unsafe {Routes::new(&mut ROUTES_STORAGE[..])};
+    let mut routes = unsafe { Routes::new(&mut ROUTES_STORAGE[..]) };
     routes.add_default_ipv4_route(default_gateway).unwrap();
 
     let neighbor_cache = NeighborCache::new(BTreeMap::new());
@@ -222,7 +222,10 @@ pub fn init(name: String, irq: Option<usize>, header: usize, size: usize, index:
         .finalize();
 
     //info!("e1000 interface {} up with addr 10.0.{}.2/24", name, index);
-    info!("e1000 interface {} up with route 10.0.2.2, addr 10.0.2.15/24", name);
+    info!(
+        "e1000 interface {} up with route 10.0.2.2, addr 10.0.2.15/24",
+        name
+    );
     let e1000_iface = E1000Interface {
         iface: Arc::new(Mutex::new(iface)),
         driver: net_driver.clone(),

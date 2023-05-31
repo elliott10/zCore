@@ -27,7 +27,7 @@ buddy_system_allocator = { git = "https://github.com/rcore-os/buddy_system_alloc
 kernel-hal-bare = { path = "../kernel-hal-bare" }
 lazy_static = { version = "1.4", features = ["spin_no_std" ] }
 bitmap-allocator = { git = "https://github.com/rcore-os/bitmap-allocator", rev = "03bd9909" }
-trapframe = "0.8.0"
+trapframe = "0.9.0"
 executor = { git = "https://github.com/rcore-os/executor.git", rev = "a2d02ee9" }
 zircon-loader = { path = "../zircon-loader", default-features = false, optional = true }
 zircon-syscall = { path = "../zircon-syscall", optional = true }
@@ -44,7 +44,8 @@ fatfs = { git = "https://github.com/rafalh/rust-fatfs.git", rev = "26fa79", defa
 x86_64 = "0.14"
 rlibc-opt = { git = "https://github.com/rcore-os/rlibc-opt.git", rev = "fb1d4a9" }
 rboot = { path = "../rboot", default-features = false }
-bootloader = { path = "/home/xly/rust/phil-opp/bootloader", features = [ "recursive_page_table", "map_physical_memory", "vga_320x200" ] }
+# bootloader = { path = "/home/xly/rust/phil-opp/bootloader", features = [ "recursive_page_table", "map_physical_memory", "vga_320x200" ] }
+bootloader = { git = "https://github.com/elliott10/bootloader", rev = "bcf8047", features = [ "recursive_page_table", "map_physical_memory" ] }
 rvm = { git = "https://github.com/rcore-os/RVM", rev = "e91d625", optional = true }
 
 # x86_64 boot via grub
@@ -55,4 +56,4 @@ physical-memory-offset = "0xFFFF800000000000"
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]
 rlibc = "1.0"
-riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"], rev = "0074cbc" }
+riscv = { git = "https://github.com/elliott10/riscv", features = ["inline-asm"], rev = "87d23f" }

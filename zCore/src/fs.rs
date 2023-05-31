@@ -1,4 +1,5 @@
 use alloc::sync::Arc;
+use core::arch::global_asm;
 use rcore_fs::vfs::FileSystem;
 use linux_object::fs::MemBuf;
 use kernel_hal_bare::drivers::{BLK_DRIVERS, BlockDriverWrapper};

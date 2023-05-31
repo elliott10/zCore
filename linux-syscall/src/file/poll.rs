@@ -292,7 +292,7 @@ struct FdSet {
     /// input addr, for update Fdset use
     addr: UserInOutPtr<u32>,
     /// FdSet bit buffer
-    origin: BitVec<Lsb0, u32>,
+    origin: BitVec<u32, Lsb0>,
 }
 
 impl FdSet {

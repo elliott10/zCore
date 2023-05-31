@@ -1,4 +1,6 @@
 // c906
+use core::arch::asm;
+
 const L1_CACHE_BYTES: u64 = 64;
 const CACHE_LINE_SIZE: u64 = 64;
 
@@ -21,7 +23,7 @@ pub fn flush_dcache_range(start: u64, end: u64) {
         unsafe {
             // 老风格的llvm asm
             // DCACHE 指定物理地址清脏表项
-            // llvm_asm!("dcache.cpa $0"::"r"(i)); 
+            // llvm_asm!("dcache.cpa $0"::"r"(i));
 
             // 新asm
             asm!(".long 0x0295000b", in("a0") i); // dcache.cpa a0, 因编译器无法识别该指令
@@ -58,7 +60,7 @@ pub fn invalidate_dcache_range(start: u64, end: u64) {
 
 pub fn fence_w() {
     unsafe {
-        llvm_asm!("fence ow, ow" ::: "memory");
+        asm!("fence ow, ow",);
     }
 }
 
@@ -67,7 +69,7 @@ pub fn fence_w() {
 // 微秒(us)
 pub fn usdelay(us: u64) {
     let mut t1: u64 = super::get_cycle();
-    let t2 = t1 + us*24;
+    let t2 = t1 + us * 24;
 
     while t2 >= t1 {
         t1 = super::get_cycle();
@@ -78,4 +80,3 @@ pub fn usdelay(us: u64) {
 pub fn msdelay(ms: u64) {
     usdelay(ms * 1000);
 }
-

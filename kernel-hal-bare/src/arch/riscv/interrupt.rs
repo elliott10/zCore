@@ -8,10 +8,10 @@ use riscv::register::{
 use spin::Mutex;
 use trapframe::{TrapFrame, UserContext};
 
-use super::{plic, uart, sbi, timer_set_next};
-use super::consts::{PHYSICAL_MEMORY_OFFSET, UART_BASE, UART0_INT_NUM};
-use crate::{map_range, phys_to_virt, putfmt};
+use super::consts::{PHYSICAL_MEMORY_OFFSET, UART0_INT_NUM, UART_BASE};
+use super::{plic, sbi, timer_set_next, uart};
 use crate::drivers::IRQ_MANAGER;
+use crate::{map_range, phys_to_virt, putfmt};
 
 const TABLE_SIZE: usize = 256;
 pub type InterruptHandle = Box<dyn Fn() + Send + Sync>;
@@ -91,7 +91,8 @@ pub fn enable_irq(irq: usize) {
 }
 
 fn external() {
-    IRQ_MANAGER.read()
+    IRQ_MANAGER
+        .read()
         .try_handle_interrupt(Some(SupervisorExternal));
 }
 
@@ -211,7 +212,7 @@ fn page_fault(stval: usize, tf: &mut TrapFrame) {
 
     use crate::PageTableImpl;
     use kernel_hal::{MMUFlags, PageTableTrait};
-    use riscv::addr::{Page, PhysAddr, VirtAddr};
+    use riscv::addr::{Address, Page, PhysAddr, PhysAddrSv39, VirtAddr};
     use riscv::paging::{PageTableFlags as PTF, Rv39PageTable, *};
 
     //let mut flags = PTF::VALID;
@@ -252,7 +253,7 @@ fn page_fault(stval: usize, tf: &mut TrapFrame) {
         if !pte.is_unused() {
             debug!(
                 "PageAlreadyMapped -> {:#x?}, {:?}",
-                pte.addr().as_usize(),
+                pte.addr::<PhysAddrSv39>().as_usize(),
                 pte.flags()
             );
             //TODO update flags

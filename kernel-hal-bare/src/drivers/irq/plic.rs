@@ -1,18 +1,16 @@
 //! RISC-V plic
 
-pub use kernel_hal::drivers::{Driver, DeviceType, DRIVERS};
+use super::super::{read, write, IRQ_MANAGER};
 use super::{IntcDriver, IrqManager};
-use crate::drivers::{
-    device_tree::DEVICE_TREE_INTC, device_tree::DEVICE_TREE_REGISTRY,
-};
-use super::super::{IRQ_MANAGER, write, read};
+use crate::drivers::{device_tree::DEVICE_TREE_INTC, device_tree::DEVICE_TREE_REGISTRY};
 use crate::phys_to_virt;
+pub use kernel_hal::drivers::{DeviceType, Driver, DRIVERS};
 //use crate::{sync::SpinNoIrqLock as Mutex, util::read, util::write};
-use spin::Mutex;
 use alloc::format;
 use alloc::string::String;
 use alloc::sync::Arc;
 use device_tree::Node;
+use spin::Mutex;
 
 pub struct Plic {
     base: usize,
@@ -60,7 +58,7 @@ impl IntcDriver for Plic {
         // enable irq for context 1
         write(
             self.base + step + 0x2080,
-            read::<u32>(self.base + step + 0x2080) | (1 << irq%32),
+            read::<u32>(self.base + step + 0x2080) | (1 << irq % 32),
         );
         // set priority to 7
         write(self.base + irq * 4, 7);
@@ -87,7 +85,7 @@ pub fn init_dt(dt: &Node) {
         write(base + enaddr, 0 as u32);
         enaddr += 4; // u32
     }
-    info!("Clear plic enable regs untill {:#x}", enaddr-4);
+    info!("Clear plic enable regs untill {:#x}", enaddr - 4);
 
     // set prio threshold to 0 for context 1
     write(base + 0x201000, 0);

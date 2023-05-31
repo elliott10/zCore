@@ -56,5 +56,7 @@ pub trait AsAny {
 }
 
 impl<T: Any> AsAny for T {
-    fn as_any(&self) -> &dyn Any { self }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }

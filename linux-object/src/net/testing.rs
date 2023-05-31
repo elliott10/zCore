@@ -1,17 +1,16 @@
-
 use byteorder::{ByteOrder, NetworkEndian};
 use log::debug;
 
-use alloc::vec;
-use alloc::sync::Arc;
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
-use core::str::FromStr;
+use alloc::sync::Arc;
+use alloc::vec;
 use core::fmt::Write;
+use core::str::FromStr;
 
 use hashbrown::HashMap;
-use kernel_hal::{NetDriver, Thread, yield_now, timer_now};
 use kernel_hal::drivers::NET_DRIVERS;
+use kernel_hal::{timer_now, yield_now, NetDriver, Thread};
 
 use smoltcp::iface::{InterfaceBuilder, NeighborCache, Routes};
 use smoltcp::phy::Device;
@@ -62,7 +61,6 @@ macro_rules! get_icmp_pong {
 }
 
 async fn ping_main() {
-
     let net_devs = NET_DRIVERS.read().len();
     if net_devs < 1 {
         loop {
@@ -77,11 +75,18 @@ async fn ping_main() {
     use kernel_hal_bare::drivers::net::rtl8x::RTL8xInterface as DriverInterface;
     //use kernel_hal_bare::drivers::net::e1000::E1000Interface as DriverInterface;
 
-    let interface = (NET_DRIVERS.write()[0]).as_any().downcast_ref::<DriverInterface>().unwrap().clone();
+    let interface = (NET_DRIVERS.write()[0])
+        .as_any()
+        .downcast_ref::<DriverInterface>()
+        .unwrap()
+        .clone();
 
     let ifname = interface.get_ifname();
     let ethernet_addr = interface.get_mac();
-    debug!("NET_DRIVERS 1/{} read OK!\n{} MAC: {:x?}", net_devs, ifname, ethernet_addr);
+    debug!(
+        "NET_DRIVERS 1/{} read OK!\n{} MAC: {:x?}",
+        net_devs, ifname, ethernet_addr
+    );
 
     let mut iface = interface.iface.lock();
     /*
@@ -92,7 +97,11 @@ async fn ping_main() {
     let device = interface.driver;
     let device_caps = device.capabilities();
 
-    debug!("IP address: {}, Default gateway: {:?}", iface.ipv4_address().unwrap(), iface.routes());
+    debug!(
+        "IP address: {}, Default gateway: {:?}",
+        iface.ipv4_address().unwrap(),
+        iface.routes()
+    );
 
     let taddr = "192.168.0.62";
     //let taddr = "10.0.2.2";
@@ -143,7 +152,6 @@ async fn ping_main() {
     let mut iface = builder.finalize();
     */
 
-
     let mut sockets = SocketSet::new(vec![]);
     let icmp_handle = sockets.add(icmp_socket);
 
@@ -166,47 +174,46 @@ async fn ping_main() {
             }
         }
 
-
-            // UDP testing
-            {
-                let mut socket = sockets.get::<UdpSocket>(udp_handle);
-                if !socket.is_open() {
-                    socket.bind(6969).unwrap();
-                    debug!("UDP test port: 6969");
-                }
-
-                let client = match socket.recv() {
-                    Ok((data, endpoint)) => {
-                        info!(
-                            "udp:6969 recv data: {:?} from {}",
-                            alloc::str::from_utf8(data).unwrap(),
-                            endpoint
-                        );
-                        Some(endpoint)
-                    }
-                    Err(_) => None,
-                };
-                if let Some(endpoint) = client {
-                    info!("UDP port 6969 recv");
-                    let data = b"Greeting from zCore\n";
-                    socket.send_slice(data, endpoint).unwrap();
-                }
+        // UDP testing
+        {
+            let mut socket = sockets.get::<UdpSocket>(udp_handle);
+            if !socket.is_open() {
+                socket.bind(6969).unwrap();
+                debug!("UDP test port: 6969");
             }
 
-            // TCP testing
-            {
-                let mut socket = sockets.get::<TcpSocket>(tcp_handle);
-                if !socket.is_open() {
-                    socket.listen(80).unwrap();
-                    debug!("TCP listen port: 80");
+            let client = match socket.recv() {
+                Ok((data, endpoint)) => {
+                    info!(
+                        "udp:6969 recv data: {:?} from {}",
+                        alloc::str::from_utf8(data).unwrap(),
+                        endpoint
+                    );
+                    Some(endpoint)
                 }
-
-                if socket.can_send() {
-                    info!("TCP port 80 recv");
-                    write!(socket, "HTTP/1.1 200 OK\r\nServer: zCore\r\nContent-Length: 13\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello! zCore \r\n").unwrap();
-                    socket.close();
-                }
+                Err(_) => None,
+            };
+            if let Some(endpoint) = client {
+                info!("UDP port 6969 recv");
+                let data = b"Greeting from zCore\n";
+                socket.send_slice(data, endpoint).unwrap();
             }
+        }
+
+        // TCP testing
+        {
+            let mut socket = sockets.get::<TcpSocket>(tcp_handle);
+            if !socket.is_open() {
+                socket.listen(80).unwrap();
+                debug!("TCP listen port: 80");
+            }
+
+            if socket.can_send() {
+                info!("TCP port 80 recv");
+                write!(socket, "HTTP/1.1 200 OK\r\nServer: zCore\r\nContent-Length: 13\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\nHello! zCore \r\n").unwrap();
+                socket.close();
+            }
+        }
 
         #[cfg(target_arch = "riscv64")]
         kernel_hal_bare::interrupt::wait_for_interrupt();
@@ -263,9 +270,9 @@ async fn ping_main() {
                 send_at += interval;
             }
 
-        #[cfg(target_arch = "riscv64")]
-        kernel_hal_bare::interrupt::wait_for_interrupt();
-        yield_now().await;
+            #[cfg(target_arch = "riscv64")]
+            kernel_hal_bare::interrupt::wait_for_interrupt();
+            yield_now().await;
 
             if socket.can_recv() {
                 let (payload, _) = socket.recv().unwrap();

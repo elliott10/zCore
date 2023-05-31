@@ -1,6 +1,7 @@
 //
 // By benpichu@gmail.com
 //
+use crate::putfmt;
 use addr2line::gimli;
 use addr2line::Context;
 use alloc::borrow::Cow;
@@ -9,7 +10,6 @@ use core::option::Option;
 use core::slice;
 use lazy_static::*;
 use object::{File, Object, ObjectSection};
-use crate::putfmt;
 use trapframe::TrapFrame;
 
 pub fn print_backtrace(tf: &TrapFrame) {
@@ -36,13 +36,19 @@ pub fn print_backtrace(tf: &TrapFrame) {
     fp = tf.general.s0; //寄存器x8是帧指针
     ra = tf.sepc;
 
-    bare_println!("fp: {:#x}, ra: {:#x}, .text section: {:#x?}-{:#x?}", fp, ra, stext, etext);
+    bare_println!(
+        "fp: {:#x}, ra: {:#x}, .text section: {:#x?}-{:#x?}",
+        fp,
+        ra,
+        stext,
+        etext
+    );
     bare_println!("stack: {:#x?}", tf.general.sp);
 
     // 处理sepc跑飞的情况
-    if  ra < stext {
+    if ra < stext {
         ra = stext;
-    }else if ra > etext {
+    } else if ra > etext {
         ra = etext;
     }
 
@@ -145,7 +151,7 @@ _kernel_debuginfo_end:
 ));
 
 #[cfg(feature = "link_kdbg")]
-extern {
+extern "C" {
     fn _kernel_debuginfo_start();
     fn _kernel_debuginfo_end();
 }

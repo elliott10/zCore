@@ -3,8 +3,6 @@
 #![no_std]
 #![deny(warnings, unsafe_code, missing_docs)]
 #![allow(clippy::upper_case_acronyms)]
-#![feature(bool_to_option)]
-#![feature(untagged_unions)]
 
 extern crate alloc;
 

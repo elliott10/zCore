@@ -18,8 +18,8 @@ use bootloader::bootinfo::{BootInfo, MemoryRegionType};
 
 #[cfg(target_arch = "riscv64")]
 use riscv::{
-    addr::Frame,
-    paging::{PageTable, PageTableFlags as EF},
+    addr::{Frame, PhysAddr},
+    paging::{PageTable, PTE, PageTableFlags as EF},
 };
 
 #[cfg(target_arch = "x86_64")]
@@ -154,8 +154,8 @@ pub extern "C" fn hal_pt_map_kernel(pt: &mut PageTable, current: &PageTable) {
     );
     debug!(
         "KERNEL_L2:{:x?}, PHYSICAL_MEMORY_L2:{:x?}",
-        ekernel.addr(),
-        ephysical.addr()
+        ekernel.addr::<PhysAddr>(),
+        ephysical.addr::<PhysAddr>()
     );
 }
 

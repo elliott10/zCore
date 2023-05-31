@@ -1,3 +1,4 @@
+use crate::drivers::bus::pci;
 use {
     super::super::*,
     acpi::{parse_rsdp, Acpi, AcpiHandler, PhysicalMapping},
@@ -21,10 +22,9 @@ use {
         structures::paging::{PageTableFlags as PTF, *},
     },
 };
-use crate::drivers::bus::pci;
 
-pub mod interrupt;
 mod acpi_table;
+pub mod interrupt;
 mod keyboard;
 
 /// Page Table
@@ -90,7 +90,10 @@ impl PageTableTrait for PageTableImpl {
         };
         trace!(
             "map: {:x?} -> {:x?}, flags={:?} in {:#x?}",
-            vaddr, paddr, flags, self.root_paddr
+            vaddr,
+            paddr,
+            flags,
+            self.root_paddr
         );
         Ok(())
     }
@@ -178,7 +181,11 @@ pub unsafe fn set_page_table(vmtoken: usize) {
     if Cr3::read().0 == frame {
         return;
     }
-    debug!("set_page_table(), vmtoken: {:#x}, cr3: {:#x?}", vmtoken, Cr3::read().0);
+    debug!(
+        "set_page_table(), vmtoken: {:#x}, cr3: {:#x?}",
+        vmtoken,
+        Cr3::read().0
+    );
     Cr3::write(frame, Cr3Flags::empty());
     debug!("set page_table @ {:#x}", vmtoken);
 }

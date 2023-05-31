@@ -1,7 +1,6 @@
 #![no_std]
 #![no_main]
 #![feature(lang_items)]
-#![feature(llvm_asm)]
 #![feature(panic_info_message)]
 #![deny(unused_must_use)]
 #![feature(global_asm)]
@@ -47,6 +46,8 @@ use alloc::{
     boxed::Box,
     string::{String, ToString},
 };
+
+use core::arch::global_asm;
 
 #[cfg(feature = "board_qemu")]
 global_asm!(include_str!("arch/riscv/boot/boot_qemu.asm"));
