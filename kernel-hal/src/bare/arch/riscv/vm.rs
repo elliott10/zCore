@@ -233,7 +233,18 @@ impl GenericPTE for Rv64PTE {
     fn set_flags(&mut self, flags: MMUFlags, _is_huge: bool) {
         let flags = PTF::from(flags) | PTF::ACCESSED | PTF::DIRTY;
         debug_assert!(flags.intersects(PTF::READABLE | PTF::EXECUTABLE));
-        self.0 = (self.0 & PHYS_ADDR_MASK) | flags.bits() as u64;
+        let flags = flags.bits() as u64;
+
+        #[cfg(feature = "board-c910light")]
+        let flags = if self.addr() >= 0x3f0000000 {
+            // C910 Device IOREMAP Page extend flags: SHARE,SO
+            flags | (0x9 << 60)
+        } else {
+            // C910 Kernel Page extend flags: CACHE,SHARE,BUF
+            flags | (0x7 << 60)
+        };
+
+        self.0 = (self.0 & PHYS_ADDR_MASK) | flags;
     }
     fn set_table(&mut self, paddr: PhysAddr) {
         self.0 = ((paddr as u64 >> 2) & PHYS_ADDR_MASK) | PTF::VALID.bits() as u64;

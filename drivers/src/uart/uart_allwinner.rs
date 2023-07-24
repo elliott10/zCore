@@ -59,6 +59,8 @@ impl Inner {
     /// 初始化串口控制器
     /// BAUD 115200
     /// FIFO ON
+    //
+    // 该驱动无法正确设置波特率;
     fn init(&self) {
         let block = self.block();
         // disable interrupts

@@ -80,14 +80,15 @@ boot_page_table_sv39:
 	#1G的一个大页: 0xffffffe0_00000000 --> 0x00000000
 	#1G的一个大页: 0xffffffe0_80000000 --> 0x80000000
 
-	.quad (0 << 10) | 0xef
+	# (0x7 << 60): C910 Kernel Page extend flags: CACHE,SHARE,BUF
+	.quad (0 << 10) | 0xef | (0x7 << 60)
 	.zero 8
-	.quad (0x80000 << 10) | 0xef
+	.quad (0x80000 << 10) | 0xef | (0x7 << 60)
 
 	.zero 8 * 381
-	.quad (0 << 10) | 0xef
+	.quad (0 << 10) | 0xef | (0x7 << 60)
 	.zero 8
-	.quad (0x80000 << 10) | 0xef
+	.quad (0x80000 << 10) | 0xef | (0x7 << 60)
 	.zero 8 * 125
 
 	.section .bss.stack

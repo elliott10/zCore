@@ -16,6 +16,10 @@ pub mod consts {
         } else if #[cfg(feature = "board-c910light")] {
             pub const KERNEL_BASE: usize = 0xffffffe0_00200000;
             pub const PHYS_MEMORY_BASE: usize = 0x200000;
+
+            #[no_mangle]
+            pub static PAGE_KERNEL_FLAGS: usize = 0x7 << 60;
+            //pub static PAGE_IOREMAP_FLAGS: usize = (0x9 << 60);
         }
     }
     pub const KERNEL_HEAP_SIZE: usize = 80 * 1024 * 1024;

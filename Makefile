@@ -1,7 +1,7 @@
 # Makefile for top level of zCore
 
 ARCH ?= x86_64
-XTASK ?= 1
+XTASK ?= 0
 
 .PHONY: help zircon-init update rootfs libc-test other-test image check doc clean
 
