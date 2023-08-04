@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["wget",""]],"macro":[["fetch_online",""]]};
