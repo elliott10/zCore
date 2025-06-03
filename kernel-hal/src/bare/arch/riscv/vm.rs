@@ -71,7 +71,8 @@ fn init_kernel_page_table() -> PagingResult<PageTable> {
         )?;
     }
     cfg_if! {
-    if #[cfg(any(feature = "board-qemu", feature = "board-fu740", feature = "board-c910light"))] {
+    if #[cfg(any(feature = "board-qemu", feature = "board-fu740",
+                 feature = "board-c910light", feature = "board-d1",))] {
         extern "C" {
             fn boot_stack();
             fn boot_stack_top();

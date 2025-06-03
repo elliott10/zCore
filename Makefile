@@ -23,9 +23,14 @@ update:
 rootfs:
 ifeq ($(ARCH), riscv64)
 	@mkdir -p rootfs/$(ARCH)/bin
+	@mkdir -p rootfs/$(ARCH)/lib
 	@ln -sf busybox rootfs/$(ARCH)/bin/ls
+	@ln -sf busybox rootfs/$(ARCH)/bin/sh
 	@[ -e rootfs/$(ARCH)/bin/busybox ] || \
 		wget https://github.com/rcore-os/busybox-prebuilts/raw/master/busybox-1.30.1-riscv64/busybox -O rootfs/$(ARCH)/bin/busybox
+	@echo Copy from $(musl_libc_dir)/lib/ld-musl-riscv64.so.1; cp $(musl_libc_dir)/lib/libc.so rootfs/riscv64/lib/ld-musl-riscv64.so.1
+
+musl_libc_dir := $(shell riscv64-linux-musl-gcc -print-sysroot)
 
 else ifeq ($(ARCH), x86_64)
 	@mkdir -p rootfs/$(ARCH)

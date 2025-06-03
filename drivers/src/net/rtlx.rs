@@ -188,8 +188,8 @@ pub fn rtlx_init<F: Fn(usize, usize) -> Option<usize>>(
     let net_driver = RTLxDriver(Arc::new(Mutex::new(rtl8211f)));
 
     let ethernet_addr = EthernetAddress::from_bytes(&mac);
-    let ip_addrs = [IpCidr::new(IpAddress::v4(192, 168, 0, 123), 24)];
-    let default_gateway = Ipv4Address::new(192, 168, 0, 1);
+    let ip_addrs = [IpCidr::new(IpAddress::v4(192, 168, 10, 123), 24)];
+    let default_gateway = Ipv4Address::new(192, 168, 10, 1);
     static mut ROUTES_STORAGE: [Option<(IpCidr, Route)>; 1] = [None; 1];
     let mut routes = unsafe { Routes::new(&mut ROUTES_STORAGE[..]) };
     routes.add_default_ipv4_route(default_gateway).unwrap();
@@ -201,8 +201,8 @@ pub fn rtlx_init<F: Fn(usize, usize) -> Option<usize>>(
         .routes(routes)
         .finalize();
 
-    info!("rtl8211f interface up with addr 192.168.0.123/24");
-    info!("rtl8211f interface up with route 192.168.0.1/24");
+    info!("rtl8211f interface up with addr 192.168.10.123/24");
+    info!("rtl8211f interface up with route 192.168.10.1/24");
     let rtl8211f_iface = RTLxInterface {
         iface: Arc::new(Mutex::new(iface)),
         driver: net_driver,
