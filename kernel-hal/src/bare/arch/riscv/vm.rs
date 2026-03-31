@@ -182,16 +182,8 @@ impl From<MMUFlags> for PTF {
         let mut flags = PTF::VALID;
         if f.contains(MMUFlags::WRITE) {
             flags |= PTF::READABLE | PTF::WRITABLE;
-            #[cfg(feature = "thead-maee")]
-            {
-                flags |= PTF::CACHEABLE;
-            }
         } else if f.contains(MMUFlags::READ) {
             flags |= PTF::READABLE;
-            #[cfg(feature = "thead-maee")]
-            {
-                flags |= PTF::CACHEABLE;
-            }
         }
         if f.contains(MMUFlags::EXECUTE) {
             flags |= PTF::EXECUTABLE;
@@ -199,9 +191,12 @@ impl From<MMUFlags> for PTF {
         if f.contains(MMUFlags::USER) {
             flags |= PTF::USER;
         }
+
         #[cfg(feature = "thead-maee")]
         if f.contains(MMUFlags::DEVICE) {
             flags |= PTF::STRONG_ORDER;
+        } else {
+            flags |= PTF::CACHEABLE;
         }
         flags
     }
